@@ -8,6 +8,12 @@ from django.core.files import File
 
 
 class Registration(models.Model):
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
     event = models.ForeignKey('events.Event', on_delete=models.CASCADE, related_name='registrations')
     participant = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='registrations'
@@ -17,6 +23,10 @@ class Registration(models.Model):
     is_present = models.BooleanField(default=False)
     registered_at = models.DateTimeField(auto_now_add=True)
     ticket_sent = models.BooleanField(default=False)
+    payment_receipt = models.FileField(upload_to='receipts/', blank=True, null=True)
+    payment_status = models.CharField(
+        max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending'
+    )
 
     class Meta:
         unique_together = ('event', 'participant')

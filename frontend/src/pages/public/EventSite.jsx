@@ -83,7 +83,7 @@ function ModernNavbar({ event }) {
   );
 }
 
-function ModernTheme({ event, onRegister, registering, registered, user }) {
+function ModernTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt }) {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Hero */}
@@ -128,6 +128,11 @@ function ModernTheme({ event, onRegister, registering, registered, user }) {
                 <IconUsers className="w-4 h-4 text-violet-400" />
                 {event.registrations_count} / {event.max_capacity} registered
               </span>
+              {event.ticket_type === 'paid' && (
+                <span className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/10 rounded-full px-4 py-2 text-sm">
+                  DZD {event.price}
+                </span>
+              )}
             </div>
 
             <a
@@ -236,7 +241,11 @@ function ModernTheme({ event, onRegister, registering, registered, user }) {
                   </svg>
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">You're registered!</h3>
-                <p className="text-gray-400 text-sm">Check your email for the ticket PDF with QR code.</p>
+                <p className="text-gray-400 text-sm">
+                  {event.ticket_type === 'paid'
+                    ? 'Your registration is pending payment approval.'
+                    : 'Check your email for the ticket PDF with QR code.'}
+                </p>
               </div>
             ) : user ? (
               <div>
@@ -249,6 +258,19 @@ function ModernTheme({ event, onRegister, registering, registered, user }) {
                     <p className="text-xs text-gray-400">{user.email}</p>
                   </div>
                 </div>
+                {event.ticket_type === 'paid' && (
+                  <div className="mb-4">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                      Payment Receipt (Required) — Price: DZD {event.price}
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => setPaymentReceipt(e.target.files[0])}
+                      className="w-full border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-300 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-violet-600/20 file:text-violet-300 file:font-semibold"
+                    />
+                  </div>
+                )}
                 <button
                   onClick={onRegister}
                   disabled={registering}
@@ -311,7 +333,7 @@ function AcademicNavbar({ event }) {
   );
 }
 
-function AcademicTheme({ event, onRegister, registering, registered, user }) {
+function AcademicTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt }) {
   return (
     <div className="min-h-screen text-white" style={{ backgroundColor: '#0A0F1E' }}>
       <AcademicNavbar event={event} />
@@ -373,6 +395,11 @@ function AcademicTheme({ event, onRegister, registering, registered, user }) {
               <IconUsers className="w-4 h-4 text-yellow-500" />
               {event.registrations_count} / {event.max_capacity} delegates
             </span>
+            {event.ticket_type === 'paid' && (
+              <span className="flex items-center gap-2 border border-yellow-700/40 bg-yellow-900/10 rounded-full px-5 py-2.5 text-sm text-yellow-300">
+                DZD {event.price}
+              </span>
+            )}
           </div>
 
           <a
@@ -503,7 +530,11 @@ function AcademicTheme({ event, onRegister, registering, registered, user }) {
                     </svg>
                   </div>
                   <h3 className="text-lg font-bold mb-2" style={{ color: '#EDE9D5' }}>Registration Confirmed!</h3>
-                  <p className="text-gray-400 text-sm">Your ticket and QR code have been sent to your email.</p>
+                  <p className="text-gray-400 text-sm">
+                    {event.ticket_type === 'paid'
+                      ? 'Your registration is pending payment approval.'
+                      : 'Your ticket and QR code have been sent to your email.'}
+                  </p>
                 </div>
               ) : user ? (
                 <div>
@@ -522,6 +553,20 @@ function AcademicTheme({ event, onRegister, registering, registered, user }) {
                       <p className="text-xs text-gray-500">{user.email}</p>
                     </div>
                   </div>
+                  {event.ticket_type === 'paid' && (
+                    <div className="mb-4">
+                      <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: 'rgba(212,160,23,0.7)' }}>
+                        Payment Receipt (Required) — Price: DZD {event.price}
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={(e) => setPaymentReceipt(e.target.files[0])}
+                        className="w-full border rounded-xl px-3 py-2 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:font-semibold"
+                        style={{ borderColor: 'rgba(212,160,23,0.3)', backgroundColor: 'rgba(212,160,23,0.04)', color: '#EDE9D5', '--file-bg': 'rgba(212,160,23,0.2)' }}
+                      />
+                    </div>
+                  )}
                   <button
                     onClick={onRegister}
                     disabled={registering}
@@ -571,7 +616,7 @@ function AcademicTheme({ event, onRegister, registering, registered, user }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // DEFAULT / FALLBACK THEME
 // ═══════════════════════════════════════════════════════════════════════════════
-function DefaultTheme({ event, onRegister, registering, registered, user }) {
+function DefaultTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
@@ -591,6 +636,9 @@ function DefaultTheme({ event, onRegister, registering, registered, user }) {
             <span className="flex items-center gap-2"><IconCalendar /> {formatDate(event.date)}</span>
             <span className="flex items-center gap-2"><IconPin /> {event.location}</span>
             <span className="flex items-center gap-2"><IconUsers /> {event.registrations_count}/{event.max_capacity}</span>
+            {event.ticket_type === 'paid' && (
+              <span className="flex items-center gap-2">DZD {event.price}</span>
+            )}
           </div>
         </div>
       </section>
@@ -649,13 +697,30 @@ function DefaultTheme({ event, onRegister, registering, registered, user }) {
                 </svg>
               </div>
               <h3 className="text-xl font-bold mb-2">You're registered!</h3>
-              <p className="text-gray-500">Check your email for the ticket PDF with QR code.</p>
+              <p className="text-gray-500">
+                {event.ticket_type === 'paid'
+                  ? 'Your registration is pending payment approval.'
+                  : 'Check your email for the ticket PDF with QR code.'}
+              </p>
             </div>
           ) : user ? (
             <div className="text-center py-4">
               <p className="text-gray-600 mb-6">
                 Signed in as <strong>{user.first_name} {user.last_name}</strong> ({user.email})
               </p>
+              {event.ticket_type === 'paid' && (
+                <div className="mb-4 text-left">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                    Payment Receipt (Required) — Price: DZD {event.price}
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setPaymentReceipt(e.target.files[0])}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-violet-100 file:text-violet-700 file:font-semibold"
+                  />
+                </div>
+              )}
               <button
                 onClick={onRegister}
                 disabled={registering}
@@ -682,7 +747,7 @@ function DefaultTheme({ event, onRegister, registering, registered, user }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // CORPORATE THEME
 // ═══════════════════════════════════════════════════════════════════════════════
-function CorporateTheme({ event, onRegister, registering, registered, user }) {
+function CorporateTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt }) {
   const [firstName, setFirstName] = useState(user?.first_name || '');
   const [lastName, setLastName] = useState(user?.last_name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -735,6 +800,11 @@ function CorporateTheme({ event, onRegister, registering, registered, user }) {
           <span className="flex items-center gap-2 border border-gray-200 rounded-full px-4 py-2 text-sm font-medium text-gray-600">
             <IconPin className="w-4 h-4 text-blue-600" />{event.location}
           </span>
+          {event.ticket_type === 'paid' && (
+            <span className="flex items-center gap-2 border border-gray-200 rounded-full px-4 py-2 text-sm font-medium text-gray-600">
+              DZD {event.price}
+            </span>
+          )}
         </div>
         <a href="#register" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3.5 rounded-2xl transition-colors text-base">
           Secure Your Spot
@@ -875,7 +945,11 @@ function CorporateTheme({ event, onRegister, registering, registered, user }) {
                   <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" className="w-7 h-7"><polyline points="20 6 9 17 4 12" /></svg>
                 </div>
                 <h3 className="text-lg font-bold mb-2">You're registered!</h3>
-                <p className="text-gray-500 text-sm">Check your email for the ticket PDF.</p>
+                <p className="text-gray-500 text-sm">
+                  {event.ticket_type === 'paid'
+                    ? 'Your registration is pending payment approval.'
+                    : 'Check your email for the ticket PDF.'}
+                </p>
               </div>
             ) : (
               <>
@@ -896,6 +970,19 @@ function CorporateTheme({ event, onRegister, registering, registered, user }) {
                   <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@company.com" type="email"
                     className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
                 </div>
+                {event.ticket_type === 'paid' && (
+                  <div className="mb-4">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                      Payment Receipt (Required) — Price: DZD {event.price}
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => setPaymentReceipt(e.target.files[0])}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-600 file:font-semibold"
+                    />
+                  </div>
+                )}
                 <button onClick={onRegister} disabled={registering}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors text-sm">
                   {registering ? 'Registering...' : 'Confirm Registration'}
@@ -933,7 +1020,7 @@ function CorporateTheme({ event, onRegister, registering, registered, user }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // MINIMAL THEME
 // ═══════════════════════════════════════════════════════════════════════════════
-function MinimalTheme({ event, onRegister, registering, registered, user }) {
+function MinimalTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt }) {
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans">
       {/* Navbar */}
@@ -1045,7 +1132,11 @@ function MinimalTheme({ event, onRegister, registering, registered, user }) {
             <div className="text-center py-6">
               <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" className="w-12 h-12 mx-auto mb-3"><polyline points="20 6 9 17 4 12" /></svg>
               <p className="text-white font-bold text-lg">Registration confirmed.</p>
-              <p className="text-slate-400 text-sm mt-1">Check your email for details.</p>
+              <p className="text-slate-400 text-sm mt-1">
+                {event.ticket_type === 'paid'
+                  ? 'Your registration is pending payment approval.'
+                  : 'Check your email for details.'}
+              </p>
             </div>
           ) : (
             <>
@@ -1066,6 +1157,19 @@ function MinimalTheme({ event, onRegister, registering, registered, user }) {
                 <input defaultValue={user?.email} type="email" placeholder="john@example.com"
                   className="w-full bg-transparent border border-slate-700 rounded text-white px-3 py-2.5 text-sm focus:outline-none focus:border-white transition-colors placeholder-slate-600" />
               </div>
+              {event.ticket_type === 'paid' && (
+                <div className="mb-4">
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+                    Payment Receipt (Required) — Price: DZD {event.price}
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setPaymentReceipt(e.target.files[0])}
+                    className="w-full border border-slate-700 rounded px-3 py-2 text-sm text-slate-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-violet-600/20 file:text-violet-300 file:font-semibold"
+                  />
+                </div>
+              )}
               <button onClick={onRegister} disabled={registering}
                 className="w-full border border-white text-white font-bold py-3 rounded text-xs tracking-widest uppercase hover:bg-white hover:text-gray-900 disabled:opacity-60 transition-all">
                 {registering ? 'Registering...' : 'Complete Registration'}
@@ -1091,7 +1195,7 @@ function MinimalTheme({ event, onRegister, registering, registered, user }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // VIBRANT THEME
 // ═══════════════════════════════════════════════════════════════════════════════
-function VibrantTheme({ event, onRegister, registering, registered, user }) {
+function VibrantTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt }) {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero with gradient */}
@@ -1137,6 +1241,11 @@ function VibrantTheme({ event, onRegister, registering, registered, user }) {
             <span className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-sm">
               <IconPin className="w-4 h-4" />{event.location}
             </span>
+            {event.ticket_type === 'paid' && (
+              <span className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-sm">
+                DZD {event.price}
+              </span>
+            )}
           </div>
           <a href="#register" className="inline-block border-2 border-white text-white font-semibold px-8 py-3 rounded-full hover:bg-white hover:text-violet-700 transition-colors">
             Register now
@@ -1257,7 +1366,11 @@ function VibrantTheme({ event, onRegister, registering, registered, user }) {
                 <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" className="w-7 h-7"><polyline points="20 6 9 17 4 12" /></svg>
               </div>
               <p className="font-bold text-lg text-gray-900">You're in!</p>
-              <p className="text-gray-400 text-sm mt-1">Ticket details sent to your email.</p>
+              <p className="text-gray-400 text-sm mt-1">
+                {event.ticket_type === 'paid'
+                  ? 'Your registration is pending payment approval.'
+                  : 'Ticket details sent to your email.'}
+              </p>
             </div>
           ) : (
             <>
@@ -1278,6 +1391,19 @@ function VibrantTheme({ event, onRegister, registering, registered, user }) {
                 <input defaultValue={user?.email} type="email" placeholder="john@example.com"
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all" />
               </div>
+              {event.ticket_type === 'paid' && (
+                <div className="mb-4">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                    Payment Receipt (Required) — Price: DZD {event.price}
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setPaymentReceipt(e.target.files[0])}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-violet-100 file:text-violet-700 file:font-semibold"
+                  />
+                </div>
+              )}
               <button onClick={onRegister} disabled={registering}
                 className="w-full text-white font-semibold py-3.5 rounded-full flex items-center justify-center gap-2 disabled:opacity-60 transition-opacity"
                 style={{ background: 'linear-gradient(135deg,#7C3AED,#4F46E5)' }}>
@@ -1323,21 +1449,43 @@ export default function EventSite() {
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [registered, setRegistered] = useState(false);
+  const [paymentReceipt, setPaymentReceipt] = useState(null);
 
   useEffect(() => {
-    api.get(`/api/public/events/${slug}/`)
-      .then(({ data }) => setEvent(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    const load = async () => {
+      try {
+        const { data } = await api.get(`/api/public/events/${slug}/`);
+        setEvent(data);
+      } catch {
+        try {
+          const { data } = await api.get(`/api/events/${slug}/`);
+          setEvent(data);
+        } catch {}
+      }
+      setLoading(false);
+    };
+    load();
   }, [slug]);
 
   const onRegister = async () => {
     if (!user) { toast.error('Please sign in to register'); return; }
+    if (event.ticket_type === 'paid' && !paymentReceipt) {
+      toast.error('Please upload your payment receipt');
+      return;
+    }
     setRegistering(true);
     try {
-      await api.post(`/api/events/${event.id}/register/`);
+      const formData = new FormData();
+      if (paymentReceipt) formData.append('payment_receipt', paymentReceipt);
+      await api.post(`/api/events/${event.id}/register/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       setRegistered(true);
-      toast.success('Registered! Check your email for the ticket.');
+      toast.success(
+        event.ticket_type === 'paid'
+          ? 'Registration submitted! Awaiting payment approval.'
+          : 'Registered! Check your email for the ticket.'
+      );
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Registration failed');
     } finally {
@@ -1348,7 +1496,7 @@ export default function EventSite() {
   if (loading) return <LoadingScreen />;
   if (!event) return <NotFoundScreen />;
 
-  const props = { event, onRegister, registering, registered, user };
+  const props = { event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt };
 
   if (event.theme === 'modern') return <ModernTheme {...props} />;
   if (event.theme === 'academic') return <AcademicTheme {...props} />;

@@ -207,6 +207,7 @@ function AdminSidebar({ variant = 'admin' }) {
     : [
         { to: '/admin', end: true, icon: <Ico.Grid />, label: 'Overview' },
         { to: '/admin/events', icon: <Ico.Calendar />, label: 'Events' },
+        { to: '/admin/registrations', icon: <Ico.Reports />, label: 'Registrations' },
         { to: '/admin/users', icon: <Ico.Users />, label: 'Users' },
         { to: '/admin/settings', icon: <Ico.Settings />, label: 'Settings' },
       ];
@@ -271,13 +272,24 @@ function AdminSidebar({ variant = 'admin' }) {
           </div>
         </div>
       ) : (
-        <div className="p-4 border-t border-gray-100 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-sm font-bold">
-            {getInitials(user)}
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-800 truncate">{user?.first_name} {user?.last_name}</p>
-            <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+        <div className="p-4 border-t border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-sm font-bold">
+                {getInitials(user)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-800 truncate">{user?.first_name} {user?.last_name}</p>
+                <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+              </div>
+            </div>
+            <button onClick={logout} title="Logout" className="text-gray-400 hover:text-danger transition-colors ml-2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </button>
           </div>
         </div>
       )}
@@ -983,6 +995,191 @@ function AdminHome() {
   );
 }
 
+// ── Admin Registrations Page ──────────────────────────────────────────────────
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+function AdminRegistrationsPage() {
+  const [registrations, setRegistrations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState('All');
+  const [actionLoading, setActionLoading] = useState(false);
+  const PAYMENT_TABS = ['All', 'Pending', 'Approved', 'Rejected'];
+
+  const fetchRegistrations = () => {
+    setLoading(true);
+    const params = tab !== 'All' ? `?payment_status=${tab.toLowerCase()}` : '';
+    api.get(`/api/admin/registrations/${params}`)
+      .then(({ data }) => setRegistrations(data.results || data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchRegistrations(); }, [tab]);
+
+  const handleApprove = async (id) => {
+    setActionLoading(true);
+    try {
+      const { data } = await api.patch(`/api/admin/registrations/${id}/approve/`);
+      setRegistrations(prev => prev.map(r => r.id === id ? data : r));
+      toast.success('Payment approved!');
+    } catch { toast.error('Failed'); }
+    finally { setActionLoading(false); }
+  };
+
+  const handleReject = async (id) => {
+    setActionLoading(true);
+    try {
+      const { data } = await api.patch(`/api/admin/registrations/${id}/reject/`);
+      setRegistrations(prev => prev.map(r => r.id === id ? data : r));
+      toast.success('Payment rejected');
+    } catch { toast.error('Failed'); }
+    finally { setActionLoading(false); }
+  };
+
+  const paymentBadge = (status) => {
+    const map = {
+      pending: 'bg-orange-100 text-orange-700',
+      approved: 'bg-green-100 text-green-700',
+      rejected: 'bg-red-100 text-red-700',
+    };
+    return (
+      <span className={`text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full ${map[status] || 'bg-gray-100 text-gray-500'}`}>
+        {status}
+      </span>
+    );
+  };
+
+  return (
+    <div className="flex-1 p-8 overflow-y-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-extrabold text-gray-900">Registrations</h1>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6">
+        {PAYMENT_TABS.map(t => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              tab === t ? 'bg-white shadow-sm border border-gray-200 text-gray-900' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-100">
+              {['PARTICIPANT', 'EVENT', 'DATE', 'PAYMENT', 'RECEIPT', 'ACTIONS'].map(h => (
+                <th key={h} className="text-left px-5 py-3.5 text-xs font-bold text-gray-400 tracking-wider">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {loading ? (
+              [...Array(4)].map((_, i) => (
+                <tr key={i}>
+                  {[...Array(6)].map((_, j) => (
+                    <td key={j} className="px-5 py-4"><div className="skeleton h-4 rounded w-20" /></td>
+                  ))}
+                </tr>
+              ))
+            ) : registrations.length === 0 ? (
+              <tr><td colSpan={6} className="px-5 py-12 text-center text-gray-400 text-sm">No registrations found</td></tr>
+            ) : (
+              registrations.map(reg => (
+                <tr key={reg.id} className="hover:bg-gray-50/40 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
+                        {(reg.participant?.first_name || '?')[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{reg.participant?.first_name} {reg.participant?.last_name}</p>
+                        <p className="text-xs text-gray-400">{reg.participant?.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 text-sm font-medium text-gray-700">{reg.event?.title}</td>
+                  <td className="px-5 py-4 text-sm text-gray-500 whitespace-nowrap">{formatDate(reg.registered_at)}</td>
+                  <td className="px-5 py-4">{paymentBadge(reg.payment_status)}</td>
+                  <td className="px-5 py-4">
+                    {reg.payment_receipt ? (
+                      <a
+                        href={`${API_BASE}${reg.payment_receipt}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary text-sm font-semibold hover:underline"
+                      >
+                        View Receipt
+                      </a>
+                    ) : (
+                      <span className="text-gray-400 text-sm">—</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4">
+                    {reg.payment_status === 'pending' && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleApprove(reg.id)}
+                          disabled={actionLoading}
+                          className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center hover:bg-green-600 disabled:opacity-50"
+                        >
+                          <Ico.Check />
+                        </button>
+                        <button
+                          onClick={() => handleReject(reg.id)}
+                          disabled={actionLoading}
+                          className="w-8 h-8 rounded-full bg-danger text-white flex items-center justify-center hover:opacity-80 disabled:opacity-50"
+                        >
+                          <Ico.X />
+                        </button>
+                      </div>
+                    )}
+                    {reg.payment_status !== 'pending' && (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ── Admin Reports Page ────────────────────────────────────────────────────────
+function AdminReportsPage() {
+  return (
+    <div className="flex-1 p-8 overflow-y-auto">
+      <h1 className="text-3xl font-extrabold text-gray-900 mb-6">Reports</h1>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
+        <p className="text-lg font-semibold mb-2">Reports coming soon</p>
+        <p className="text-sm">Export and analytics reports will be available here.</p>
+      </div>
+    </div>
+  );
+}
+
+// ── Admin Revenue Page ────────────────────────────────────────────────────────
+function AdminRevenuePage() {
+  return (
+    <div className="flex-1 p-8 overflow-y-auto">
+      <h1 className="text-3xl font-extrabold text-gray-900 mb-6">Revenue</h1>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
+        <p className="text-lg font-semibold mb-2">Revenue tracking coming soon</p>
+        <p className="text-sm">Revenue analytics and financial reports will be available here.</p>
+      </div>
+    </div>
+  );
+}
+
 // ── Layout ────────────────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   return (
@@ -997,6 +1194,9 @@ export default function AdminDashboard() {
             <Routes>
               <Route index element={<AdminHome />} />
               <Route path="events" element={<AdminEventsPage />} />
+              <Route path="registrations" element={<AdminRegistrationsPage />} />
+              <Route path="reports" element={<AdminReportsPage />} />
+              <Route path="revenue" element={<AdminRevenuePage />} />
               <Route path="settings" element={<AdminHome />} />
             </Routes>
           </>

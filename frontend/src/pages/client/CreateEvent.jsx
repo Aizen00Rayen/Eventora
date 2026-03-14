@@ -316,9 +316,9 @@ export default function CreateEvent() {
 
                 {form.ticket_type === 'paid' && (
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Ticket Price (USD)</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Ticket Price (DZD)</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-xs">DZD</span>
                       <input
                         name="price"
                         type="number"
@@ -326,7 +326,7 @@ export default function CreateEvent() {
                         value={form.price}
                         onChange={handleChange}
                         placeholder="0.00"
-                        className="input pl-7"
+                        className="input pl-12"
                       />
                     </div>
                   </div>
@@ -388,7 +388,7 @@ export default function CreateEvent() {
                   { label: 'End Date', value: form.end_date ? new Date(form.end_date).toLocaleString() : '—' },
                   { label: 'Location', value: form.location },
                   { label: 'Max Capacity', value: form.max_capacity },
-                  { label: 'Ticket Type', value: form.ticket_type === 'paid' ? `Paid — $${form.price}` : 'Free' },
+                  { label: 'Ticket Type', value: form.ticket_type === 'paid' ? `Paid — DZD ${form.price}` : 'Free' },
                   { label: 'Theme', value: form.theme },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex items-center justify-between px-5 py-3.5">

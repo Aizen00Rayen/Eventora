@@ -17,6 +17,10 @@ class Event(models.Model):
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
     ]
+    TICKET_TYPE_CHOICES = [
+        ('free', 'Free'),
+        ('paid', 'Paid'),
+    ]
 
     title = models.CharField(max_length=200)
     description = models.TextField()
@@ -26,6 +30,8 @@ class Event(models.Model):
     logo = models.ImageField(upload_to='event_logos/', blank=True, null=True)
     theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='modern')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    ticket_type = models.CharField(max_length=10, choices=TICKET_TYPE_CHOICES, default='free')
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     slug = models.SlugField(unique=True, blank=True)
     client = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='events'

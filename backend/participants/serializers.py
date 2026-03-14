@@ -13,6 +13,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'event', 'participant', 'token', 'qr_code',
             'is_present', 'registered_at', 'ticket_sent',
+            'payment_receipt', 'payment_status',
         ]
         read_only_fields = ['id', 'token', 'qr_code', 'registered_at', 'ticket_sent']
 
@@ -20,5 +21,5 @@ class RegistrationSerializer(serializers.ModelSerializer):
 class RegistrationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Registration
-        fields = ['id', 'event', 'token', 'qr_code', 'is_present', 'registered_at']
-        read_only_fields = ['id', 'token', 'qr_code', 'is_present', 'registered_at']
+        fields = ['id', 'event', 'token', 'qr_code', 'is_present', 'registered_at', 'payment_receipt', 'payment_status']
+        read_only_fields = ['id', 'token', 'qr_code', 'is_present', 'registered_at', 'payment_status']

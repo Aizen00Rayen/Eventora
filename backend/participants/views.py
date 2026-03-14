@@ -8,7 +8,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from events.models import Event
-from events.permissions import IsClientUser, IsOrganizerUser
+from events.permissions import IsClientUser, IsOrganizerUser, IsAdminUser
 from .models import Registration
 from .serializers import RegistrationSerializer, RegistrationCreateSerializer
 from .utils import generate_ticket_pdf
@@ -24,7 +24,18 @@ class RegisterForEventView(APIView):
         if event.registrations.count() >= event.max_capacity:
             return Response({'detail': 'Event is full.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        reg = Registration.objects.create(event=event, participant=request.user)
+        payment_receipt = request.FILES.get('payment_receipt')
+        # For free events, auto-approve; for paid events, set pending
+        initial_payment_status = 'pending'
+        if event.ticket_type == 'free':
+            initial_payment_status = 'approved'
+
+        reg = Registration.objects.create(
+            event=event,
+            participant=request.user,
+            payment_receipt=payment_receipt,
+            payment_status=initial_payment_status,
+        )
 
         # Send ticket PDF + HTML email
         try:
@@ -106,3 +117,43 @@ class ValidateByTokenView(APIView):
             'participant': reg.participant.get_full_name(),
             'event': reg.event.title,
         })
+
+
+# ── Admin-only registration management ───────────────────────────────────────
+
+class AdminRegistrationsView(generics.ListAPIView):
+    """Admin can list all registrations, optionally filtered by event."""
+    serializer_class = RegistrationSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        qs = Registration.objects.select_related('participant', 'event').order_by('-registered_at')
+        event_id = self.request.query_params.get('event_id')
+        payment_status = self.request.query_params.get('payment_status')
+        if event_id:
+            qs = qs.filter(event_id=event_id)
+        if payment_status:
+            qs = qs.filter(payment_status=payment_status)
+        return qs
+
+
+class ApprovePaymentView(APIView):
+    """Admin approves a participant's payment/registration."""
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        reg = get_object_or_404(Registration, pk=pk)
+        reg.payment_status = 'approved'
+        reg.save(update_fields=['payment_status'])
+        return Response(RegistrationSerializer(reg).data)
+
+
+class RejectPaymentView(APIView):
+    """Admin rejects a participant's payment/registration."""
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        reg = get_object_or_404(Registration, pk=pk)
+        reg.payment_status = 'rejected'
+        reg.save(update_fields=['payment_status'])
+        return Response(RegistrationSerializer(reg).data)

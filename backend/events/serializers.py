@@ -12,7 +12,7 @@ class EventSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'description', 'date', 'location', 'max_capacity',
             'logo', 'theme', 'status', 'slug', 'client', 'created_at', 'updated_at',
-            'registrations_count',
+            'registrations_count', 'ticket_type', 'price',
         ]
         read_only_fields = ['id', 'slug', 'client', 'status', 'created_at', 'updated_at']
 
@@ -23,5 +23,5 @@ class EventSerializer(serializers.ModelSerializer):
 class EventCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
-        fields = ['id', 'title', 'description', 'date', 'location', 'max_capacity', 'logo', 'theme', 'slug', 'status']
+        fields = ['id', 'title', 'description', 'date', 'location', 'max_capacity', 'logo', 'theme', 'slug', 'status', 'ticket_type', 'price']
         read_only_fields = ['id', 'slug', 'status']

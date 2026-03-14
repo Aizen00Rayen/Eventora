@@ -134,13 +134,28 @@ function ClientSidebar() {
           Upgrade Now
         </button>
       </div>
+      {/* Logout */}
+      <div className="mx-3 mb-4">
+        <button
+          onClick={() => { logout(); navigate('/'); }}
+          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Sign Out
+        </button>
+      </div>
     </aside>
   );
 }
 
 // ── Top Navbar ───────────────────────────────────────────────────────────────
 function TopNavbar() {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
   return (
     <div className="h-16 bg-white border-b border-gray-100 flex items-center px-6 gap-4 shrink-0">
       <div className="flex-1 relative max-w-lg">
@@ -163,6 +178,17 @@ function TopNavbar() {
           <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold">
             {getInitials(user)}
           </div>
+          <button
+            onClick={() => { logout(); navigate('/'); }}
+            title="Sign Out"
+            className="w-9 h-9 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
         </div>
       </div>
     </div>

@@ -90,7 +90,14 @@ class EventPublicDetailView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, slug):
-        event = get_object_or_404(Event, slug=slug, status='approved')
+        event = get_object_or_404(Event, slug=slug)
+        # Non-approved events are only visible to the owner or admins
+        user = request.user
+        if event.status != 'approved':
+            if not user.is_authenticated:
+                return Response({'detail': 'Not found.'}, status=404)
+            if user.role not in ('admin',) and event.client_id != user.id:
+                return Response({'detail': 'Not found.'}, status=404)
         data = EventSerializer(event).data
         data['speakers'] = SpeakerSerializer(event.speakers.all(), many=True, context={'request': request}).data
         data['sponsors'] = SponsorSerializer(event.sponsors.all(), many=True, context={'request': request}).data
