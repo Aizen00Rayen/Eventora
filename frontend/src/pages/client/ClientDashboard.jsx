@@ -572,67 +572,292 @@ function OrganizersPage() {
 }
 
 // ── Statistics Page ──────────────────────────────────────────────────────────
-const PIE_COLORS = ['#6C47FF', '#00D4AA', '#FF5757', '#FFB830'];
+const PIE_COLORS = ['#6C47FF', '#00D4AA', '#FF5757'];
+
+function KPICard({ label, value, sub, color, icon }) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center gap-4 shadow-sm">
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-2xl font-extrabold text-gray-900">{value ?? '—'}</p>
+        <p className="text-sm font-medium text-gray-600">{label}</p>
+        {sub != null && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+      </div>
+    </div>
+  );
+}
 
 function StatsPage() {
+  const [events, setEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState('');
   const [stats, setStats] = useState(null);
+  const [eventStats, setEventStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingEvent, setLoadingEvent] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
 
+  // Load events list + global stats
   useEffect(() => {
-    api.get('/api/client/stats/').then(({ data }) => setStats(data)).finally(() => setLoading(false));
+    Promise.all([
+      api.get('/api/events/'),
+      api.get('/api/client/stats/').catch(() => null),
+    ]).then(([evRes, stRes]) => {
+      const evs = evRes.data.results || evRes.data;
+      setEvents(evs);
+      if (evs.length > 0) setSelectedEvent(String(evs[0].id));
+      if (stRes) setStats(stRes.data);
+    }).finally(() => setLoading(false));
   }, []);
+
+  // Load per-event stats whenever selection changes
+  useEffect(() => {
+    if (!selectedEvent) return;
+    setLoadingEvent(true);
+    setEventStats(null);
+    api.get(`/api/events/${selectedEvent}/stats/`).catch(() => null)
+      .then((res) => { if (res) setEventStats(res.data); })
+      .finally(() => setLoadingEvent(false));
+  }, [selectedEvent]);
+
+  const totalReg = eventStats?.total ?? stats?.registrations_per_event?.reduce((s, e) => s + e.total, 0) ?? 0;
+  const present = eventStats?.present ?? stats?.registrations_per_event?.reduce((s, e) => s + e.present, 0) ?? 0;
+  const absent = totalReg - present;
+  const rate = totalReg > 0 ? Math.round((present / totalReg) * 100) : 0;
+
+  // Build 14-day bar chart data (mock days if API doesn't return daily breakdown)
+  const barData = (() => {
+    if (eventStats?.daily) return eventStats.daily;
+    const days = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      days.push({
+        day: d.toLocaleDateString('en', { month: 'short', day: 'numeric' }),
+        registrations: 0,
+      });
+    }
+    return days;
+  })();
+
+  // Donut chart data
+  const donutData = [
+    { name: 'Present', value: present },
+    { name: 'Absent', value: absent },
+  ];
+
+  // Participant list
+  const participants = eventStats?.participants ?? [];
+
+  const toggleRow = (id) => {
+    setSelectedRows((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
+  };
+  const toggleAll = () => {
+    setSelectedRows(selectedRows.length === participants.length ? [] : participants.map((p) => p.id));
+  };
+
+  const exportCSV = () => {
+    if (participants.length === 0) { toast.error('No participants to export'); return; }
+    const rows = [['Name', 'Email', 'Present'], ...participants.map((p) => [p.name, p.email, p.is_present ? 'Yes' : 'No'])];
+    const csv = rows.map((r) => r.join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'participants.csv';
+    a.click();
+    toast.success('CSV exported');
+  };
 
   if (loading) return (
     <div className="flex-1 p-8">
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">{[1,2,3].map((n) => <div key={n} className="skeleton h-24 rounded-card" />)}</div>
-      <div className="skeleton h-64 rounded-card" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {[1,2,3,4].map((n) => <div key={n} className="h-24 bg-gray-100 rounded-2xl animate-pulse" />)}
+      </div>
+      <div className="h-64 bg-gray-100 rounded-2xl animate-pulse" />
     </div>
   );
-  if (!stats) return null;
-
-  const pieData = stats.registrations_per_event.map((e) => ({ name: e.event_title, value: e.total, present: e.present }));
-  const presenceData = stats.registrations_per_event.map((e) => ({
-    name: e.event_title.length > 15 ? e.event_title.slice(0,15) + '…' : e.event_title,
-    total: e.total, present: e.present,
-  }));
 
   return (
     <div className="flex-1 p-8 overflow-y-auto">
-      <h1 className="text-2xl font-bold mb-6">Statistics</h1>
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        <StatCard label="Total Events" value={stats.total_events} icon="📅" />
-        <StatCard label="Approved" value={stats.approved_events} icon="✅" bgColor="bg-green-100" />
-        <StatCard label="Pending Review" value={stats.pending_events} icon="⏳" bgColor="bg-yellow-100" />
+      {/* Header + Event selector */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-extrabold text-gray-900">Statistics</h1>
+          <p className="text-gray-500 text-sm mt-0.5">Track registrations, attendance, and participant data.</p>
+        </div>
+        <select
+          value={selectedEvent}
+          onChange={(e) => setSelectedEvent(e.target.value)}
+          className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all shadow-sm min-w-[180px]"
+        >
+          {events.map((ev) => <option key={ev.id} value={String(ev.id)}>{ev.title}</option>)}
+        </select>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card">
-          <h3 className="font-bold mb-4">Registrations per Event</h3>
-          {presenceData.length === 0 ? <EmptyState title="No data yet" /> : (
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={presenceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Bar dataKey="total" name="Registered" fill="#6C47FF" radius={[4,4,0,0]} />
-                <Bar dataKey="present" name="Present" fill="#00D4AA" radius={[4,4,0,0]} />
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+        <KPICard
+          label="Total Registered"
+          value={totalReg}
+          color="bg-primary/10"
+          icon={<svg viewBox="0 0 24 24" fill="none" stroke="#6C47FF" strokeWidth="2" className="w-6 h-6"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>}
+        />
+        <KPICard
+          label="Present"
+          value={present}
+          color="bg-green-100"
+          icon={<svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" className="w-6 h-6"><polyline points="20 6 9 17 4 12"/></svg>}
+        />
+        <KPICard
+          label="Absent"
+          value={absent}
+          color="bg-red-100"
+          icon={<svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" className="w-6 h-6"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
+        />
+        <KPICard
+          label="Participation Rate"
+          value={`${rate}%`}
+          color="bg-accent/10"
+          icon={<svg viewBox="0 0 24 24" fill="none" stroke="#00D4AA" strokeWidth="2" className="w-6 h-6"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>}
+        />
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-7">
+        {/* Bar chart */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+          <h3 className="font-bold text-gray-900 mb-1">Registrations per Day</h3>
+          <p className="text-xs text-gray-400 mb-4">Last 14 days</p>
+          {loadingEvent ? (
+            <div className="h-52 bg-gray-100 rounded-xl animate-pulse" />
+          ) : (
+            <ResponsiveContainer width="100%" height={210}>
+              <BarChart data={barData} barSize={16}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+                <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: 12 }}
+                />
+                <Bar dataKey="registrations" fill="#6C47FF" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
-        <div className="card">
-          <h3 className="font-bold mb-4">Presence Rate</h3>
-          {pieData.length === 0 ? <EmptyState title="No data yet" /> : (
-            <ResponsiveContainer width="100%" height={260}>
-              <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
-                  {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                </Pie>
-                <Tooltip /><Legend />
-              </PieChart>
-            </ResponsiveContainer>
+
+        {/* Donut chart */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col">
+          <h3 className="font-bold text-gray-900 mb-1">Attendance Overview</h3>
+          <p className="text-xs text-gray-400 mb-4">Present vs Absent</p>
+          {loadingEvent ? (
+            <div className="flex-1 bg-gray-100 rounded-xl animate-pulse" />
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <ResponsiveContainer width="100%" height={160}>
+                <PieChart>
+                  <Pie
+                    data={donutData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={70}
+                    paddingAngle={3}
+                  >
+                    {donutData.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex gap-4 mt-2">
+                {donutData.map((d, i) => (
+                  <div key={d.name} className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i] }} />
+                    {d.name} ({d.value})
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
+      </div>
+
+      {/* Participants table */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 className="font-bold text-gray-900">Participants</h3>
+          {selectedRows.length > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={exportCSV}
+                className="text-xs font-semibold bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Export CSV ({selectedRows.length})
+              </button>
+              <button className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1.5 rounded-lg hover:bg-primary/20 transition-colors">
+                Generate Attestations
+              </button>
+            </div>
+          )}
+        </div>
+        {loadingEvent ? (
+          <div className="p-5 space-y-3">
+            {[1,2,3].map((n) => <div key={n} className="h-10 bg-gray-100 rounded-xl animate-pulse" />)}
+          </div>
+        ) : participants.length === 0 ? (
+          <div className="py-12 text-center text-gray-400">
+            <p className="text-sm">No participant data available for this event.</p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50 text-left">
+                <th className="pl-5 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedRows.length === participants.length}
+                    onChange={toggleAll}
+                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                </th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Participant</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {participants.map((p) => (
+                <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="pl-5 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedRows.includes(p.id)}
+                      onChange={() => toggleRow(p.id)}
+                      className="rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
+                        {(p.name || '?')[0].toUpperCase()}
+                      </div>
+                      <span className="text-sm font-medium text-gray-900">{p.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-500">{p.email}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${p.is_present ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {p.is_present ? 'Present' : 'Registered'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
