@@ -1,8 +1,10 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django.conf import settings
+from django.utils import timezone
 import secrets
 
 from events.models import Event
@@ -39,15 +41,37 @@ class OrganizerListCreateView(generics.ListCreateAPIView):
             door_number=data.get('door_number', ''),
             work_schedule=data.get('work_schedule', ''),
         )
-        # Send credentials email
+        # Send HTML credentials email
         try:
-            send_mail(
-                subject=f"Your Eventora organizer credentials for {event.title}",
-                message=f"Hello {user.first_name},\n\nYou have been assigned as organizer for '{event.title}'.\n\nUsername: {user.username}\nPassword: {password}\n\nDoor: {organizer.door_number}\nSchedule: {organizer.work_schedule}\n\nBest regards,\nEventora",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=True,
+            base_url = getattr(settings, 'BASE_URL', 'http://localhost:3000')
+            login_url = f"{base_url}/login"
+            html_body = render_to_string('emails/organizer_credentials_email.html', {
+                'organizer_name': user.first_name or user.username,
+                'organizer_email': user.email,
+                'temp_password': password,
+                'event': event,
+                'login_url': login_url,
+                'base_url': getattr(settings, 'MEDIA_BASE_URL', 'http://localhost:8000'),
+                'year': timezone.now().year,
+            })
+            plain_body = (
+                f"Hello {user.first_name},\n\n"
+                f"You have been assigned as organizer for '{event.title}'.\n\n"
+                f"Email: {user.email}\n"
+                f"Temporary Password: {password}\n\n"
+                f"Door: {organizer.door_number}\n"
+                f"Schedule: {organizer.work_schedule}\n\n"
+                f"Login at: {login_url}\n\n"
+                f"For security, please change your password upon first login.\n\nEventora"
             )
+            msg = EmailMultiAlternatives(
+                subject=f"Your Eventora organizer credentials for {event.title}",
+                body=plain_body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user.email],
+            )
+            msg.attach_alternative(html_body, 'text/html')
+            msg.send(fail_silently=True)
         except Exception:
             pass
         return Response(OrganizerSerializer(organizer).data, status=status.HTTP_201_CREATED)
