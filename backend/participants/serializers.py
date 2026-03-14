@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from accounts.serializers import UserSerializer
 from events.serializers import EventSerializer
-from .models import Registration
+from .models import Registration, ExhibitorStand
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
@@ -23,3 +23,17 @@ class RegistrationCreateSerializer(serializers.ModelSerializer):
         model = Registration
         fields = ['id', 'event', 'token', 'qr_code', 'is_present', 'registered_at', 'payment_receipt', 'payment_status']
         read_only_fields = ['id', 'token', 'qr_code', 'is_present', 'registered_at', 'payment_status']
+
+
+class ExhibitorStandSerializer(serializers.ModelSerializer):
+    exhibitor = UserSerializer(read_only=True)
+    event = EventSerializer(read_only=True)
+    price = serializers.ReadOnlyField()
+
+    class Meta:
+        model = ExhibitorStand
+        fields = [
+            'id', 'event', 'exhibitor', 'stand_type', 'company_name',
+            'payment_receipt', 'payment_status', 'price', 'registered_at',
+        ]
+        read_only_fields = ['id', 'payment_status', 'registered_at']

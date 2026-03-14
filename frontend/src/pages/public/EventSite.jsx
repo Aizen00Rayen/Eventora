@@ -36,6 +36,164 @@ function IconUsers({ className = 'w-5 h-5' }) {
   );
 }
 
+// ── Exhibitor Stand Section (shared across all themes) ────────────────────────
+const STAND_OPTIONS = [
+  {
+    type: 'minimum',
+    price: '50,000',
+    label: 'Minimum',
+    features: ['6 m² stand area', '2 exhibitor passes', 'Company name display', 'Basic setup included'],
+  },
+  {
+    type: 'standard',
+    price: '100,000',
+    label: 'Standard',
+    features: ['12 m² stand area', '5 exhibitor passes', 'Branded backdrop', 'Electrical + WiFi', 'Lunch included'],
+    popular: true,
+  },
+  {
+    type: 'premium',
+    price: '150,000',
+    label: 'Premium',
+    features: ['24 m² corner stand', '10 exhibitor passes', 'Full branding package', 'Prime location', 'Promotional materials', 'All meals + VIP access'],
+  },
+];
+
+function ExhibitorStandSection({
+  event,
+  onStandRegister,
+  standRegistering,
+  standRegistered,
+  standType,
+  setStandType,
+  exhibitorCompany,
+  setExhibitorCompany,
+  exhibitorReceipt,
+  setExhibitorReceipt,
+  user,
+  // theme variants
+  dark = false,
+  accentColor = '#7C3AED',
+  bgCard = '',
+  borderCard = '',
+  textPrimary = '',
+  textSecondary = '',
+  inputClass = '',
+  buttonClass = '',
+  sectionBg = '',
+  sectionId = 'exhibitor',
+}) {
+  return (
+    <section id={sectionId} className={`py-20 px-8 ${sectionBg}`}>
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-10">
+          <h2 className={`text-3xl font-bold mb-2 ${textPrimary}`}>Exhibit at this Event</h2>
+          <p className={`text-sm ${textSecondary}`}>Showcase your brand — choose the stand that fits your goals.</p>
+        </div>
+
+        {/* Stand cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+          {STAND_OPTIONS.map((opt) => {
+            const selected = standType === opt.type;
+            return (
+              <button
+                key={opt.type}
+                onClick={() => setStandType(opt.type)}
+                className={`relative text-left rounded-2xl p-6 border-2 transition-all focus:outline-none ${
+                  selected
+                    ? 'border-violet-500 shadow-lg shadow-violet-500/20'
+                    : dark
+                    ? 'border-white/10 hover:border-white/30'
+                    : 'border-gray-200 hover:border-violet-300'
+                } ${bgCard}`}
+              >
+                {opt.popular && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-xs font-bold px-3 py-0.5 rounded-full">
+                    Most Popular
+                  </span>
+                )}
+                <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${selected ? 'text-violet-400' : textSecondary}`}>{opt.label}</p>
+                <p className={`text-2xl font-extrabold mb-4 ${textPrimary}`}>
+                  DZD {opt.price}
+                </p>
+                <ul className="space-y-1.5">
+                  {opt.features.map((f) => (
+                    <li key={f} className={`flex items-center gap-2 text-xs ${textSecondary}`}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke={selected ? '#7C3AED' : accentColor} strokeWidth="2.5" className="w-3.5 h-3.5 shrink-0">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Form */}
+        <div className={`max-w-lg mx-auto rounded-2xl border p-7 ${bgCard} ${borderCard}`}>
+          {standRegistered ? (
+            <div className="text-center py-6">
+              <div className="w-14 h-14 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mx-auto mb-4">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" className="w-7 h-7">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <p className={`font-bold text-lg mb-1 ${textPrimary}`}>Stand Application Submitted!</p>
+              <p className={`text-sm ${textSecondary}`}>Your payment receipt is under review. We'll contact you once approved.</p>
+            </div>
+          ) : user ? (
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-xs font-semibold uppercase tracking-wide mb-1.5 ${textSecondary}`}>
+                  Company / Organisation Name
+                </label>
+                <input
+                  value={exhibitorCompany}
+                  onChange={(e) => setExhibitorCompany(e.target.value)}
+                  placeholder="Acme Corp"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={`block text-xs font-semibold uppercase tracking-wide mb-1.5 ${textSecondary}`}>
+                  Payment Receipt (Required){standType ? ` — ${STAND_OPTIONS.find(o => o.type === standType)?.label} Stand: DZD ${STAND_OPTIONS.find(o => o.type === standType)?.price}` : ' — select a stand above'}
+                </label>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={(e) => setExhibitorReceipt(e.target.files[0])}
+                  className={inputClass + ' file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:font-semibold ' + (dark ? 'file:bg-violet-600/20 file:text-violet-300' : 'file:bg-violet-100 file:text-violet-700')}
+                />
+              </div>
+              <button
+                onClick={onStandRegister}
+                disabled={standRegistering || !standType}
+                className={`w-full font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 ${buttonClass}`}
+              >
+                {standRegistering ? 'Submitting...' : `Apply for ${standType ? STAND_OPTIONS.find(o => o.type === standType)?.label : 'a'} Stand`}
+              </button>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className={`text-sm mb-5 ${textSecondary}`}>Sign in to apply for an exhibitor stand.</p>
+              <div className="flex gap-3 justify-center">
+                <Link to="/login" className="bg-violet-600 hover:bg-violet-700 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors">
+                  Sign In
+                </Link>
+                <Link to="/register" className={`border font-semibold px-6 py-2.5 rounded-xl transition-colors ${dark ? 'border-white/20 text-white/80 hover:border-white/40' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}>
+                  Create Account
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ── Loading / Not Found (shared) ───────────────────────────────────────────────
 function LoadingScreen() {
   return (
@@ -75,6 +233,7 @@ function ModernNavbar({ event }) {
         <a href="#about" className="hover:text-white transition-colors">About</a>
         <a href="#speakers" className="hover:text-white transition-colors">Speakers</a>
         <a href="#sponsors" className="hover:text-white transition-colors">Sponsors</a>
+        <a href="#exhibitor" className="hover:text-white transition-colors">Exhibit</a>
         <a href="#register" className="bg-violet-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-violet-700 transition-colors">
           Register
         </a>
@@ -83,7 +242,7 @@ function ModernNavbar({ event }) {
   );
 }
 
-function ModernTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt }) {
+function ModernTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt, onStandRegister, standRegistering, standRegistered, standType, setStandType, exhibitorCompany, setExhibitorCompany, exhibitorReceipt, setExhibitorReceipt }) {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Hero */}
@@ -296,6 +455,18 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
         </div>
       </section>
 
+      {/* Exhibitor Stands */}
+      <ExhibitorStandSection
+        event={event} onStandRegister={onStandRegister} standRegistering={standRegistering}
+        standRegistered={standRegistered} standType={standType} setStandType={setStandType}
+        exhibitorCompany={exhibitorCompany} setExhibitorCompany={setExhibitorCompany}
+        exhibitorReceipt={exhibitorReceipt} setExhibitorReceipt={setExhibitorReceipt} user={user}
+        dark sectionBg="bg-gray-900" bgCard="bg-gray-800" borderCard="border-gray-700"
+        textPrimary="text-white" textSecondary="text-gray-400" accentColor="#7C3AED"
+        inputClass="w-full bg-transparent border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-violet-500 transition-colors placeholder-gray-600"
+        buttonClass="bg-violet-600 hover:bg-violet-700 text-white"
+      />
+
       {/* Footer */}
       <footer className="bg-gray-950 border-t border-gray-800 py-8 px-8 text-center text-gray-500 text-sm">
         © {new Date().getFullYear()} Eventora. All rights reserved.
@@ -333,7 +504,7 @@ function AcademicNavbar({ event }) {
   );
 }
 
-function AcademicTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt }) {
+function AcademicTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt, onStandRegister, standRegistering, standRegistered, standType, setStandType, exhibitorCompany, setExhibitorCompany, exhibitorReceipt, setExhibitorReceipt }) {
   return (
     <div className="min-h-screen text-white" style={{ backgroundColor: '#0A0F1E' }}>
       <AcademicNavbar event={event} />
@@ -602,6 +773,20 @@ function AcademicTheme({ event, onRegister, registering, registered, user, payme
         </div>
       </section>
 
+      {/* Exhibitor Stands */}
+      <ExhibitorStandSection
+        event={event} onStandRegister={onStandRegister} standRegistering={standRegistering}
+        standRegistered={standRegistered} standType={standType} setStandType={setStandType}
+        exhibitorCompany={exhibitorCompany} setExhibitorCompany={setExhibitorCompany}
+        exhibitorReceipt={exhibitorReceipt} setExhibitorReceipt={setExhibitorReceipt} user={user}
+        dark sectionBg="" bgCard="" borderCard="" accentColor="#d4a017"
+        textPrimary="text-yellow-200" textSecondary="text-gray-500"
+        inputClass="w-full border rounded-xl px-3 py-2.5 text-sm text-yellow-200 focus:outline-none transition-colors"
+        buttonClass="font-bold text-gray-950"
+        sectionId="exhibitor"
+        style={{ backgroundColor: '#0D1425' }}
+      />
+
       {/* Footer */}
       <footer
         className="border-t py-8 px-8 text-center text-sm"
@@ -616,7 +801,7 @@ function AcademicTheme({ event, onRegister, registering, registered, user, payme
 // ═══════════════════════════════════════════════════════════════════════════════
 // DEFAULT / FALLBACK THEME
 // ═══════════════════════════════════════════════════════════════════════════════
-function DefaultTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt }) {
+function DefaultTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt, onStandRegister, standRegistering, standRegistered, standType, setStandType, exhibitorCompany, setExhibitorCompany, exhibitorReceipt, setExhibitorReceipt }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
@@ -687,7 +872,7 @@ function DefaultTheme({ event, onRegister, registering, registered, user, paymen
           </section>
         )}
 
-        <section id="register" className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+        <section id="register" className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm" style={{scrollMarginTop:'80px'}}>
           <h2 className="text-2xl font-bold mb-4">Register for this event</h2>
           {registered ? (
             <div className="text-center py-8">
@@ -739,6 +924,18 @@ function DefaultTheme({ event, onRegister, registering, registered, user, paymen
             </div>
           )}
         </section>
+
+        {/* Exhibitor Stands */}
+        <ExhibitorStandSection
+          event={event} onStandRegister={onStandRegister} standRegistering={standRegistering}
+          standRegistered={standRegistered} standType={standType} setStandType={setStandType}
+          exhibitorCompany={exhibitorCompany} setExhibitorCompany={setExhibitorCompany}
+          exhibitorReceipt={exhibitorReceipt} setExhibitorReceipt={setExhibitorReceipt} user={user}
+          sectionBg="bg-gray-50" bgCard="bg-white" borderCard="border-gray-200"
+          textPrimary="text-gray-900" textSecondary="text-gray-400" accentColor="#7C3AED"
+          inputClass="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
+          buttonClass="bg-violet-600 hover:bg-violet-700 text-white"
+        />
       </div>
     </div>
   );
@@ -747,7 +944,7 @@ function DefaultTheme({ event, onRegister, registering, registered, user, paymen
 // ═══════════════════════════════════════════════════════════════════════════════
 // CORPORATE THEME
 // ═══════════════════════════════════════════════════════════════════════════════
-function CorporateTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt }) {
+function CorporateTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt, onStandRegister, standRegistering, standRegistered, standType, setStandType, exhibitorCompany, setExhibitorCompany, exhibitorReceipt, setExhibitorReceipt }) {
   const [firstName, setFirstName] = useState(user?.first_name || '');
   const [lastName, setLastName] = useState(user?.last_name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -994,6 +1191,18 @@ function CorporateTheme({ event, onRegister, registering, registered, user, paym
         </div>
       </section>
 
+      {/* Exhibitor Stands */}
+      <ExhibitorStandSection
+        event={event} onStandRegister={onStandRegister} standRegistering={standRegistering}
+        standRegistered={standRegistered} standType={standType} setStandType={setStandType}
+        exhibitorCompany={exhibitorCompany} setExhibitorCompany={setExhibitorCompany}
+        exhibitorReceipt={exhibitorReceipt} setExhibitorReceipt={setExhibitorReceipt} user={user}
+        sectionBg="bg-gray-50" bgCard="bg-white" borderCard="border-gray-200"
+        textPrimary="text-gray-900" textSecondary="text-gray-400" accentColor="#2563EB"
+        inputClass="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+        buttonClass="bg-blue-600 hover:bg-blue-700 text-white"
+      />
+
       {/* Footer */}
       <footer className="bg-white border-t border-gray-100 px-8 py-6 flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
@@ -1020,7 +1229,7 @@ function CorporateTheme({ event, onRegister, registering, registered, user, paym
 // ═══════════════════════════════════════════════════════════════════════════════
 // MINIMAL THEME
 // ═══════════════════════════════════════════════════════════════════════════════
-function MinimalTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt }) {
+function MinimalTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt, onStandRegister, standRegistering, standRegistered, standType, setStandType, exhibitorCompany, setExhibitorCompany, exhibitorReceipt, setExhibitorReceipt }) {
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans">
       {/* Navbar */}
@@ -1179,6 +1388,19 @@ function MinimalTheme({ event, onRegister, registering, registered, user, paymen
         </div>
       </section>
 
+      {/* Exhibitor Stands */}
+      <ExhibitorStandSection
+        event={event} onStandRegister={onStandRegister} standRegistering={standRegistering}
+        standRegistered={standRegistered} standType={standType} setStandType={setStandType}
+        exhibitorCompany={exhibitorCompany} setExhibitorCompany={setExhibitorCompany}
+        exhibitorReceipt={exhibitorReceipt} setExhibitorReceipt={setExhibitorReceipt} user={user}
+        dark sectionBg="" bgCard="" borderCard="border-slate-700"
+        textPrimary="text-white" textSecondary="text-slate-400" accentColor="#7C3AED"
+        inputClass="w-full bg-transparent border border-slate-700 rounded text-white px-3 py-2.5 text-sm focus:outline-none focus:border-white transition-colors placeholder-slate-600"
+        buttonClass="border border-white text-white hover:bg-white hover:text-gray-900 text-xs tracking-widest uppercase"
+        style={{ backgroundColor: '#0F172A' }}
+      />
+
       {/* Footer */}
       <footer style={{ backgroundColor: '#0F172A' }} className="border-t border-slate-800 px-8 py-5 flex items-center justify-between flex-wrap gap-4">
         <p className="text-xs text-slate-500">© {new Date().getFullYear()} Eventora. All rights reserved.</p>
@@ -1195,7 +1417,7 @@ function MinimalTheme({ event, onRegister, registering, registered, user, paymen
 // ═══════════════════════════════════════════════════════════════════════════════
 // VIBRANT THEME
 // ═══════════════════════════════════════════════════════════════════════════════
-function VibrantTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt }) {
+function VibrantTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt, onStandRegister, standRegistering, standRegistered, standType, setStandType, exhibitorCompany, setExhibitorCompany, exhibitorReceipt, setExhibitorReceipt }) {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero with gradient */}
@@ -1417,6 +1639,18 @@ function VibrantTheme({ event, onRegister, registering, registered, user, paymen
         </div>
       </section>
 
+      {/* Exhibitor Stands */}
+      <ExhibitorStandSection
+        event={event} onStandRegister={onStandRegister} standRegistering={standRegistering}
+        standRegistered={standRegistered} standType={standType} setStandType={setStandType}
+        exhibitorCompany={exhibitorCompany} setExhibitorCompany={setExhibitorCompany}
+        exhibitorReceipt={exhibitorReceipt} setExhibitorReceipt={setExhibitorReceipt} user={user}
+        sectionBg="bg-gray-50" bgCard="bg-white" borderCard="border-gray-200"
+        textPrimary="text-gray-900" textSecondary="text-gray-400" accentColor="#7C3AED"
+        inputClass="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all"
+        buttonClass="bg-violet-600 hover:bg-violet-700 text-white"
+      />
+
       {/* Footer */}
       <footer className="bg-gray-900 px-8 py-7 flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
@@ -1450,6 +1684,12 @@ export default function EventSite() {
   const [registering, setRegistering] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [paymentReceipt, setPaymentReceipt] = useState(null);
+  // Exhibitor stand state
+  const [standType, setStandType] = useState('');
+  const [exhibitorCompany, setExhibitorCompany] = useState('');
+  const [exhibitorReceipt, setExhibitorReceipt] = useState(null);
+  const [standRegistering, setStandRegistering] = useState(false);
+  const [standRegistered, setStandRegistered] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -1493,10 +1733,37 @@ export default function EventSite() {
     }
   };
 
+  const onStandRegister = async () => {
+    if (!user) { toast.error('Please sign in first'); return; }
+    if (!standType) { toast.error('Please select a stand type'); return; }
+    if (!exhibitorCompany.trim()) { toast.error('Please enter your company name'); return; }
+    if (!exhibitorReceipt) { toast.error('Please upload your payment receipt'); return; }
+    setStandRegistering(true);
+    try {
+      const fd = new FormData();
+      fd.append('stand_type', standType);
+      fd.append('company_name', exhibitorCompany);
+      fd.append('payment_receipt', exhibitorReceipt);
+      await api.post(`/api/events/${event.id}/exhibitor/register/`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setStandRegistered(true);
+      toast.success('Stand application submitted! Awaiting payment approval.');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Stand registration failed');
+    } finally {
+      setStandRegistering(false);
+    }
+  };
+
   if (loading) return <LoadingScreen />;
   if (!event) return <NotFoundScreen />;
 
-  const props = { event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt };
+  const props = {
+    event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt,
+    onStandRegister, standRegistering, standRegistered, standType, setStandType,
+    exhibitorCompany, setExhibitorCompany, exhibitorReceipt, setExhibitorReceipt,
+  };
 
   if (event.theme === 'modern') return <ModernTheme {...props} />;
   if (event.theme === 'academic') return <AcademicTheme {...props} />;

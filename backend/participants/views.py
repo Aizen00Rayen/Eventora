@@ -9,8 +9,8 @@ from django.utils import timezone
 
 from events.models import Event
 from events.permissions import IsClientUser, IsOrganizerUser, IsAdminUser
-from .models import Registration
-from .serializers import RegistrationSerializer, RegistrationCreateSerializer
+from .models import Registration, ExhibitorStand
+from .serializers import RegistrationSerializer, RegistrationCreateSerializer, ExhibitorStandSerializer
 from .utils import generate_ticket_pdf
 
 
@@ -157,3 +157,83 @@ class RejectPaymentView(APIView):
         reg.payment_status = 'rejected'
         reg.save(update_fields=['payment_status'])
         return Response(RegistrationSerializer(reg).data)
+
+
+# ── Exhibitor stand registration ─────────────────────────────────────────────
+
+class RegisterExhibitorStandView(APIView):
+    """Authenticated users register for an exhibitor stand at an event."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, event_id):
+        event = get_object_or_404(Event, pk=event_id, status='approved')
+        if ExhibitorStand.objects.filter(event=event, exhibitor=request.user).exists():
+            return Response({'detail': 'Already registered as exhibitor.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        stand_type = request.data.get('stand_type')
+        if stand_type not in ('minimum', 'standard', 'premium'):
+            return Response({'detail': 'Invalid stand type.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        company_name = request.data.get('company_name', '').strip()
+        if not company_name:
+            return Response({'detail': 'Company name is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        payment_receipt = request.FILES.get('payment_receipt')
+        if not payment_receipt:
+            return Response({'detail': 'Payment receipt is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        stand = ExhibitorStand.objects.create(
+            event=event,
+            exhibitor=request.user,
+            stand_type=stand_type,
+            company_name=company_name,
+            payment_receipt=payment_receipt,
+        )
+        return Response(ExhibitorStandSerializer(stand).data, status=status.HTTP_201_CREATED)
+
+
+class AdminExhibitorStandsView(generics.ListAPIView):
+    """Admin lists all exhibitor stand registrations, optionally filtered by event."""
+    serializer_class = ExhibitorStandSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        qs = ExhibitorStand.objects.select_related('exhibitor', 'event').order_by('-registered_at')
+        event_id = self.request.query_params.get('event_id')
+        payment_status = self.request.query_params.get('payment_status')
+        if event_id:
+            qs = qs.filter(event_id=event_id)
+        if payment_status:
+            qs = qs.filter(payment_status=payment_status)
+        return qs
+
+
+class ApproveExhibitorPaymentView(APIView):
+    """Admin approves an exhibitor stand payment."""
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        stand = get_object_or_404(ExhibitorStand, pk=pk)
+        stand.payment_status = 'approved'
+        stand.save(update_fields=['payment_status'])
+        return Response(ExhibitorStandSerializer(stand).data)
+
+
+class RejectExhibitorPaymentView(APIView):
+    """Admin rejects an exhibitor stand payment."""
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        stand = get_object_or_404(ExhibitorStand, pk=pk)
+        stand.payment_status = 'rejected'
+        stand.save(update_fields=['payment_status'])
+        return Response(ExhibitorStandSerializer(stand).data)
+
+
+class MyExhibitorStandsView(generics.ListAPIView):
+    """Authenticated user views their own exhibitor stand registrations."""
+    serializer_class = ExhibitorStandSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return ExhibitorStand.objects.filter(exhibitor=self.request.user).select_related('event')

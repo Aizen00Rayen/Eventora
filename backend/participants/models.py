@@ -48,3 +48,43 @@ class Registration(models.Model):
 
     def __str__(self):
         return f"{self.participant.username} @ {self.event.title}"
+
+
+class ExhibitorStand(models.Model):
+    STAND_TYPE_CHOICES = [
+        ('minimum', 'Minimum'),
+        ('standard', 'Standard'),
+        ('premium', 'Premium'),
+    ]
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    STAND_PRICES = {
+        'minimum': 50000,
+        'standard': 100000,
+        'premium': 150000,
+    }
+
+    event = models.ForeignKey('events.Event', on_delete=models.CASCADE, related_name='exhibitor_stands')
+    exhibitor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='exhibitor_stands'
+    )
+    stand_type = models.CharField(max_length=20, choices=STAND_TYPE_CHOICES)
+    company_name = models.CharField(max_length=200)
+    payment_receipt = models.FileField(upload_to='exhibitor_receipts/')
+    payment_status = models.CharField(
+        max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending'
+    )
+    registered_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('event', 'exhibitor')
+
+    @property
+    def price(self):
+        return self.STAND_PRICES.get(self.stand_type, 0)
+
+    def __str__(self):
+        return f"{self.exhibitor.username} – {self.stand_type} stand @ {self.event.title}"
