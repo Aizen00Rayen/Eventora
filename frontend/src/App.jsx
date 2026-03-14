@@ -26,6 +26,7 @@ import OrganizerDashboard from './pages/organizer/OrganizerDashboard';
 
 // Participant pages
 import MyTickets from './pages/participant/MyTickets';
+import TicketPrint from './pages/participant/TicketPrint';
 
 // 404
 import NotFound from './pages/NotFound';
@@ -76,6 +77,9 @@ export default function App() {
           {/* Participant */}
           <Route path="/my-tickets" element={
             <PrivateRoute role="participant"><MyTickets /></PrivateRoute>
+          } />
+          <Route path="/tickets/:id/print" element={
+            <PrivateRoute role="participant"><TicketPrint /></PrivateRoute>
           } />
 
           {/* 404 */}

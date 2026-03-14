@@ -680,6 +680,640 @@ function DefaultTheme({ event, onRegister, registering, registered, user }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// CORPORATE THEME
+// ═══════════════════════════════════════════════════════════════════════════════
+function CorporateTheme({ event, onRegister, registering, registered, user }) {
+  const [firstName, setFirstName] = useState(user?.first_name || '');
+  const [lastName, setLastName] = useState(user?.last_name || '');
+  const [email, setEmail] = useState(user?.email || '');
+
+  return (
+    <div className="min-h-screen bg-white text-gray-900">
+      {/* Navbar */}
+      <nav className="border-b border-gray-100 px-8 h-16 flex items-center justify-between sticky top-0 z-30 bg-white">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-4 h-4">
+              <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
+          <span className="font-bold text-lg text-gray-900">Eventora</span>
+        </div>
+        <div className="hidden md:flex items-center gap-7 text-sm text-gray-500 font-medium">
+          <a href="#about" className="hover:text-gray-900 transition-colors">About</a>
+          <a href="#speakers" className="hover:text-gray-900 transition-colors">Speakers</a>
+          <a href="#sponsors" className="hover:text-gray-900 transition-colors">Sponsors</a>
+          <a href="#register" className="bg-blue-600 text-white px-5 py-2 rounded-xl hover:bg-blue-700 transition-colors font-semibold">
+            Register Now
+          </a>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section className="max-w-3xl mx-auto text-center px-8 pt-20 pb-16">
+        <div className="inline-flex items-center gap-2 border border-blue-200 bg-blue-50 rounded-full px-4 py-1.5 mb-7">
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+          <span className="text-xs font-semibold text-blue-600 uppercase tracking-widest">{event.category || 'Annual Leadership Conference'}</span>
+        </div>
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-5xl sm:text-6xl font-extrabold leading-tight mb-5"
+        >
+          {event.title.split(' ').length > 4
+            ? <>{event.title.split(' ').slice(0, Math.ceil(event.title.split(' ').length / 2)).join(' ')}{' '}
+              <span className="text-blue-600">{event.title.split(' ').slice(Math.ceil(event.title.split(' ').length / 2)).join(' ')}</span></>
+            : event.title
+          }
+        </motion.h1>
+        <p className="text-gray-500 text-lg max-w-xl mx-auto mb-8">{event.description?.slice(0, 120)}{event.description?.length > 120 ? '…' : ''}</p>
+        <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+          <span className="flex items-center gap-2 border border-gray-200 rounded-full px-4 py-2 text-sm font-medium text-gray-600">
+            <IconCalendar className="w-4 h-4 text-blue-600" />{formatDate(event.date)}
+          </span>
+          <span className="flex items-center gap-2 border border-gray-200 rounded-full px-4 py-2 text-sm font-medium text-gray-600">
+            <IconPin className="w-4 h-4 text-blue-600" />{event.location}
+          </span>
+        </div>
+        <a href="#register" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3.5 rounded-2xl transition-colors text-base">
+          Secure Your Spot
+        </a>
+      </section>
+
+      {/* Venue image */}
+      {event.logo ? (
+        <div className="max-w-3xl mx-auto px-8 mb-16">
+          <img src={`${API_BASE}${event.logo}`} alt={event.title} className="w-full rounded-2xl object-cover max-h-72 border border-gray-100 shadow-sm" />
+        </div>
+      ) : (
+        <div className="max-w-3xl mx-auto px-8 mb-16">
+          <div className="w-full h-56 rounded-2xl bg-gradient-to-br from-blue-900 via-blue-800 to-slate-900 flex items-center justify-center border border-gray-200">
+            <span className="text-white/30 text-sm tracking-widest uppercase">Event Venue</span>
+          </div>
+        </div>
+      )}
+
+      {/* About */}
+      <section id="about" className="py-16 px-8 border-t border-gray-100">
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-12 items-start">
+          <div>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-0.5 h-5 bg-blue-600" />
+              <h2 className="text-xl font-bold">About the Event</h2>
+            </div>
+            <p className="text-gray-500 leading-relaxed mb-6">{event.description}</p>
+            <div className="space-y-3">
+              {[
+                { label: 'Expert Keynotes', sub: `Learn from CEOs of Fortune 500 companies.` },
+                { label: 'Networking Hubs', sub: 'Dedicated spaces for strategic partnerships.' },
+              ].map((item) => (
+                <div key={item.label} className="flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" className="w-3 h-3"><polyline points="20 6 9 17 4 12" /></svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{item.label}</p>
+                    <p className="text-xs text-gray-400">{item.sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { icon: <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.5" className="w-6 h-6"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>, value: `${event.registrations_count}+`, label: 'Industry Attendees' },
+              { icon: <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.5" className="w-6 h-6"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>, value: event.ticket_type === 'free' ? 'Free' : 'Hybrid', label: 'Format Experience' },
+              { icon: <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.5" className="w-6 h-6"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>, value: 'Eventora Corp', label: 'Official Organizer' },
+              { icon: <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.5" className="w-6 h-6"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>, value: `${event.speakers?.length || 0}+`, label: 'Speaker Sessions' },
+            ].map((s, i) => (
+              <div key={i} className="border border-gray-100 rounded-2xl p-5">
+                {s.icon}
+                <p className="text-xl font-extrabold mt-3">{s.value}</p>
+                <p className="text-xs text-gray-400 mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Speakers */}
+      {event.speakers?.length > 0 && (
+        <section id="speakers" className="py-16 px-8 bg-gray-50">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold">Distinguished Speakers</h2>
+              <p className="text-gray-400 mt-2 text-sm">Voices that shape the corporate landscape</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {event.speakers.map((sp) => (
+                <div key={sp.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <div className="relative">
+                    {sp.photo ? (
+                      <img src={`${API_BASE}${sp.photo}`} alt={sp.first_name} className="w-full h-52 object-cover object-top" />
+                    ) : (
+                      <div className="w-full h-52 bg-gradient-to-br from-slate-200 to-blue-100 flex items-center justify-center">
+                        <span className="text-4xl font-bold text-blue-300">{sp.first_name[0]}</span>
+                      </div>
+                    )}
+                    {sp.schedule_time && (
+                      <span className="absolute bottom-3 left-3 bg-blue-900/80 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-lg">
+                        {new Date(sp.schedule_time).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-5">
+                    <h3 className="font-bold text-gray-900">{sp.first_name} {sp.last_name}</h3>
+                    <p className="text-sm text-blue-600 font-medium mt-0.5">{sp.title}</p>
+                    {sp.bio && <p className="text-xs text-gray-400 mt-2 line-clamp-3">{sp.bio}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Sponsors */}
+      {event.sponsors?.length > 0 && (
+        <section id="sponsors" className="py-12 px-8 border-t border-b border-gray-100">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-center text-xs font-semibold text-gray-400 uppercase tracking-widest mb-7">Our Strategic Partners</p>
+            <div className="flex flex-wrap gap-4 items-center justify-center">
+              {event.sponsors.map((sp) => (
+                <div key={sp.id} className="flex items-center gap-2.5 border border-gray-200 rounded-2xl px-6 py-3 hover:border-blue-200 transition-colors">
+                  {sp.logo
+                    ? <img src={`${API_BASE}${sp.logo}`} alt={sp.name} className="h-8 object-contain opacity-60 hover:opacity-100 transition-opacity" />
+                    : <span className="text-sm font-bold text-gray-500">{sp.name}</span>
+                  }
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Registration */}
+      <section id="register" className="py-20 px-8" style={{ backgroundColor: '#0F172A' }}>
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 className="text-3xl font-bold text-white mb-2">Join us at Eventora</h2>
+            <p className="text-slate-400 text-sm mb-7">Limited seats available. Register today to secure early bird pricing and exclusive workshop access.</p>
+            <div className="space-y-3">
+              {['Full event access', 'Premium networking dinner', 'Digital workshop bundle'].map((item) => (
+                <div key={item} className="flex items-center gap-3 text-sm text-slate-300">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" className="w-4 h-4 shrink-0"><polyline points="20 6 9 17 4 12" /></svg>
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl p-7">
+            {registered ? (
+              <div className="text-center py-6">
+                <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" className="w-7 h-7"><polyline points="20 6 9 17 4 12" /></svg>
+                </div>
+                <h3 className="text-lg font-bold mb-2">You're registered!</h3>
+                <p className="text-gray-500 text-sm">Check your email for the ticket PDF.</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">First Name</label>
+                    <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="John"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Surname</label>
+                    <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Work Email</label>
+                  <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@company.com" type="email"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
+                </div>
+                <button onClick={onRegister} disabled={registering}
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition-colors text-sm">
+                  {registering ? 'Registering...' : 'Confirm Registration'}
+                </button>
+                <p className="text-xs text-gray-400 text-center mt-3">By registering, you agree to our Terms of Service and Privacy Policy.</p>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-100 px-8 py-6 flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-3.5 h-3.5">
+              <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
+          <span className="font-bold text-sm text-gray-700">Eventora</span>
+        </div>
+        <div className="flex items-center gap-5 text-sm text-gray-400">
+          <a href="#" className="hover:text-gray-600 transition-colors">Privacy</a>
+          <a href="#" className="hover:text-gray-600 transition-colors">Terms</a>
+          <a href="#" className="hover:text-gray-600 transition-colors">Contact</a>
+          <a href="#" className="hover:text-gray-600 transition-colors">Press</a>
+        </div>
+        <p className="text-xs text-gray-400">© {new Date().getFullYear()} Eventora Corp. All rights reserved.</p>
+      </footer>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MINIMAL THEME
+// ═══════════════════════════════════════════════════════════════════════════════
+function MinimalTheme({ event, onRegister, registering, registered, user }) {
+  return (
+    <div className="min-h-screen bg-white text-gray-900 font-sans">
+      {/* Navbar */}
+      <nav className="border-b border-gray-200 px-8 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full" style={{ background: 'linear-gradient(135deg,#7C3AED,#00D4AA)' }} />
+          <span className="font-semibold text-sm tracking-wide text-gray-900">EVENTORA</span>
+        </div>
+        <div className="hidden md:flex items-center gap-7 text-xs font-semibold tracking-[0.12em] text-gray-400">
+          <a href="#about" className="hover:text-gray-900 transition-colors uppercase">About</a>
+          <a href="#speakers" className="hover:text-gray-900 transition-colors uppercase">Speakers</a>
+          <a href="#register" className="hover:text-gray-900 transition-colors uppercase">Register</a>
+          <a href="#register" className="border border-gray-900 text-gray-900 px-4 py-1.5 rounded text-xs uppercase tracking-widest hover:bg-gray-900 hover:text-white transition-colors">
+            Register Now
+          </a>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section className="max-w-3xl mx-auto px-8 pt-24 pb-28">
+        <div className="flex items-center gap-5 mb-8 text-xs font-semibold tracking-widest text-gray-400 uppercase">
+          <span>{formatDate(event.date)}</span>
+          <span className="w-px h-4 bg-gray-300" />
+          <span>{event.location}</span>
+        </div>
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-6xl sm:text-7xl font-black leading-none tracking-tight text-gray-950 mb-8"
+        >
+          {event.title.toUpperCase()}.
+        </motion.h1>
+        <p className="text-gray-400 text-base max-w-lg leading-relaxed">{event.description?.slice(0, 160)}{event.description?.length > 160 ? '…' : ''}</p>
+      </section>
+
+      {/* About */}
+      <section id="about" className="border-t border-b border-gray-200 py-16 px-8">
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-12">
+          <div>
+            <p className="text-xs font-semibold text-violet-600 tracking-widest mb-5">01 / THE VISION</p>
+            <p className="text-2xl font-semibold leading-snug text-gray-900">{event.description}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: 'Capacity', value: `${event.max_capacity} Participants` },
+              { label: 'Format', value: event.ticket_type === 'free' ? 'Single Track' : 'Multi-Track' },
+              { label: 'Organizer', value: 'Eventora' },
+              { label: 'Venue', value: event.location },
+            ].map((s) => (
+              <div key={s.label} className="border border-gray-200 rounded p-4">
+                <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
+                <p className="font-semibold text-sm text-gray-900">{s.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Speakers */}
+      {event.speakers?.length > 0 && (
+        <section id="speakers" className="py-16 px-8">
+          <div className="max-w-5xl mx-auto">
+            <p className="text-xs font-semibold text-violet-600 tracking-widest mb-8">02 / SPEAKERS</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+              {event.speakers.map((sp) => (
+                <div key={sp.id}>
+                  {sp.photo ? (
+                    <img src={`${API_BASE}${sp.photo}`} alt={sp.first_name}
+                      className="w-full aspect-square object-cover object-top rounded mb-3 filter grayscale" />
+                  ) : (
+                    <div className="w-full aspect-square bg-gray-100 rounded mb-3 flex items-center justify-center">
+                      <span className="text-3xl font-black text-gray-300">{sp.first_name[0]}</span>
+                    </div>
+                  )}
+                  <p className="text-xs font-bold uppercase tracking-wider text-gray-900">{sp.first_name} {sp.last_name}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{sp.title}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Partners */}
+      {event.sponsors?.length > 0 && (
+        <section className="border-t border-gray-200 py-10 px-8">
+          <div className="max-w-5xl mx-auto">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-6">Partners</p>
+            <div className="flex flex-wrap gap-5 items-center">
+              {event.sponsors.map((sp) => (
+                <div key={sp.id} className="flex items-center gap-2">
+                  {sp.logo
+                    ? <img src={`${API_BASE}${sp.logo}`} alt={sp.name} className="h-6 object-contain filter grayscale opacity-40" />
+                    : <span className="text-sm font-bold text-gray-300">{sp.name}</span>
+                  }
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Registration */}
+      <section id="register" className="py-24 px-8" style={{ backgroundColor: '#0F172A' }}>
+        <div className="max-w-xl mx-auto">
+          <p className="text-xs font-semibold text-violet-400 tracking-widest mb-4 text-center uppercase">Join Us</p>
+          <h2 className="text-4xl font-black text-white text-center leading-tight mb-10">Reserve your place at the table.</h2>
+          {registered ? (
+            <div className="text-center py-6">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" className="w-12 h-12 mx-auto mb-3"><polyline points="20 6 9 17 4 12" /></svg>
+              <p className="text-white font-bold text-lg">Registration confirmed.</p>
+              <p className="text-slate-400 text-sm mt-1">Check your email for details.</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-xs text-slate-400 uppercase tracking-widest mb-1.5">First Name</label>
+                  <input defaultValue={user?.first_name} placeholder="John"
+                    className="w-full bg-transparent border border-slate-700 rounded text-white px-3 py-2.5 text-sm focus:outline-none focus:border-white transition-colors placeholder-slate-600" />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 uppercase tracking-widest mb-1.5">Last Name</label>
+                  <input defaultValue={user?.last_name} placeholder="Doe"
+                    className="w-full bg-transparent border border-slate-700 rounded text-white px-3 py-2.5 text-sm focus:outline-none focus:border-white transition-colors placeholder-slate-600" />
+                </div>
+              </div>
+              <div className="mb-6">
+                <label className="block text-xs text-slate-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                <input defaultValue={user?.email} type="email" placeholder="john@example.com"
+                  className="w-full bg-transparent border border-slate-700 rounded text-white px-3 py-2.5 text-sm focus:outline-none focus:border-white transition-colors placeholder-slate-600" />
+              </div>
+              <button onClick={onRegister} disabled={registering}
+                className="w-full border border-white text-white font-bold py-3 rounded text-xs tracking-widest uppercase hover:bg-white hover:text-gray-900 disabled:opacity-60 transition-all">
+                {registering ? 'Registering...' : 'Complete Registration'}
+              </button>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ backgroundColor: '#0F172A' }} className="border-t border-slate-800 px-8 py-5 flex items-center justify-between flex-wrap gap-4">
+        <p className="text-xs text-slate-500">© {new Date().getFullYear()} Eventora. All rights reserved.</p>
+        <div className="flex gap-5 text-xs text-slate-500">
+          <a href="#" className="hover:text-white transition-colors">Privacy</a>
+          <a href="#" className="hover:text-white transition-colors">Terms</a>
+          <a href="#" className="hover:text-white transition-colors">Twitter</a>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VIBRANT THEME
+// ═══════════════════════════════════════════════════════════════════════════════
+function VibrantTheme({ event, onRegister, registering, registered, user }) {
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Hero with gradient */}
+      <div style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 40%, #06B6D4 100%)' }}>
+        {/* Navbar */}
+        <nav className="px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-4 h-4">
+                <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+            </div>
+            <span className="font-bold text-white text-base">Eventora</span>
+          </div>
+          <div className="hidden md:flex items-center gap-6 text-sm text-white/80 font-medium">
+            <a href="#about" className="hover:text-white transition-colors">About</a>
+            <a href="#speakers" className="hover:text-white transition-colors">Speakers</a>
+            <a href="#sponsors" className="hover:text-white transition-colors">Sponsors</a>
+            <a href="#register" className="border border-white/50 text-white rounded-full px-5 py-2 hover:bg-white/10 transition-colors font-semibold">
+              Register now
+            </a>
+          </div>
+        </nav>
+
+        {/* Hero */}
+        <section className="max-w-2xl mx-auto text-center px-8 pt-12 pb-20 text-white">
+          <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 mb-7">
+            <span className="text-xs font-semibold">Coming this {formatDate(event.date).split(' ')[0]} • {new Date().getFullYear()} Edition</span>
+          </div>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-5xl sm:text-6xl font-extrabold leading-tight mb-5"
+          >
+            {event.title}
+          </motion.h1>
+          <p className="text-white/80 text-base mb-8 max-w-lg mx-auto">{event.description?.slice(0, 140)}{event.description?.length > 140 ? '…' : ''}</p>
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+            <span className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-sm">
+              <IconCalendar className="w-4 h-4" />{formatDate(event.date)}
+            </span>
+            <span className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-sm">
+              <IconPin className="w-4 h-4" />{event.location}
+            </span>
+          </div>
+          <a href="#register" className="inline-block border-2 border-white text-white font-semibold px-8 py-3 rounded-full hover:bg-white hover:text-violet-700 transition-colors">
+            Register now
+          </a>
+        </section>
+      </div>
+
+      {/* About */}
+      <section id="about" className="py-16 px-8">
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-12 items-start">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">About the Event</h2>
+            <p className="text-gray-500 leading-relaxed mb-6">{event.description}</p>
+            <div className="space-y-3">
+              {[
+                { color: 'bg-violet-500', label: 'Capacity', value: `${event.max_capacity}+ Attendees` },
+                { color: 'bg-cyan-500', label: 'Format', value: 'In-person Festival' },
+                { color: 'bg-violet-500', label: 'Organizer', value: 'Eventora Labs' },
+                { color: 'bg-cyan-500', label: 'Theme', value: 'Vibrant Energy' },
+              ].map((s) => (
+                <div key={s.label} className="flex items-center gap-3">
+                  <div className={`w-1 h-8 rounded-full ${s.color} shrink-0`} />
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-widest">{s.label}</p>
+                    <p className="font-semibold text-sm text-gray-900">{s.value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          {event.logo ? (
+            <img src={`${API_BASE}${event.logo}`} alt={event.title}
+              className="w-full aspect-video object-cover rounded-2xl shadow-sm" />
+          ) : (
+            <div className="w-full aspect-video rounded-2xl bg-gradient-to-br from-violet-100 to-cyan-100 flex items-center justify-center">
+              <IconCalendar className="w-16 h-16 text-violet-300" />
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Speakers */}
+      {event.speakers?.length > 0 && (
+        <section id="speakers" className="py-16 px-8 bg-gray-50">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900">World Class Speakers</h2>
+              <p className="text-gray-400 mt-2 text-sm">Learn from the pioneers shaping the digital landscape.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {event.speakers.map((sp, idx) => {
+                const dayColors = ['bg-violet-600', 'bg-cyan-600', 'bg-emerald-600'];
+                const textColors = ['text-violet-600', 'text-cyan-600', 'text-emerald-600'];
+                return (
+                  <div key={sp.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <div className="relative">
+                      {sp.photo ? (
+                        <img src={`${API_BASE}${sp.photo}`} alt={sp.first_name} className="w-full h-52 object-cover object-top" />
+                      ) : (
+                        <div className="w-full h-52 bg-gradient-to-br from-violet-100 to-cyan-100 flex items-center justify-center">
+                          <span className="text-4xl font-bold text-violet-400">{sp.first_name[0]}</span>
+                        </div>
+                      )}
+                      {sp.schedule_time && (
+                        <span className={`absolute top-3 left-3 ${dayColors[idx % dayColors.length]} text-white text-xs font-bold px-2.5 py-1 rounded-lg`}>
+                          {new Date(sp.schedule_time).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-5">
+                      <h3 className="font-bold text-gray-900">{sp.first_name} {sp.last_name}</h3>
+                      <p className={`text-sm font-medium mt-0.5 ${textColors[idx % textColors.length]}`}>{sp.title}</p>
+                      {sp.bio && <p className="text-xs text-gray-400 mt-2 line-clamp-3">{sp.bio}</p>}
+                      <div className="flex gap-2 mt-4">
+                        <button className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:border-violet-400 transition-colors">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        </button>
+                        <button className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:border-violet-400 transition-colors">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Partners */}
+      {event.sponsors?.length > 0 && (
+        <section className="py-12 px-8 border-t border-gray-100">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-center text-xs font-semibold text-gray-400 uppercase tracking-widest mb-8">Our Global Partners</p>
+            <div className="flex flex-wrap gap-8 items-center justify-center">
+              {event.sponsors.map((sp) => (
+                <div key={sp.id}>
+                  {sp.logo
+                    ? <img src={`${API_BASE}${sp.logo}`} alt={sp.name} className="h-7 object-contain filter grayscale opacity-40 hover:opacity-70 transition-opacity" />
+                    : <span className="text-sm font-bold text-gray-300">{sp.name}</span>
+                  }
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Registration */}
+      <section id="register" className="py-16 px-8">
+        <div className="max-w-md mx-auto bg-white rounded-3xl shadow-lg border border-gray-100 p-8">
+          <h2 className="text-2xl font-bold text-gray-900 text-center mb-1">Claim Your Spot</h2>
+          <p className="text-gray-400 text-sm text-center mb-7">Early bird registration is open — limited seats.</p>
+          {registered ? (
+            <div className="text-center py-6">
+              <div className="w-14 h-14 rounded-full bg-violet-100 flex items-center justify-center mx-auto mb-4">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" className="w-7 h-7"><polyline points="20 6 9 17 4 12" /></svg>
+              </div>
+              <p className="font-bold text-lg text-gray-900">You're in!</p>
+              <p className="text-gray-400 text-sm mt-1">Ticket details sent to your email.</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">First Name</label>
+                  <input defaultValue={user?.first_name} placeholder="John"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Surname</label>
+                  <input defaultValue={user?.last_name} placeholder="Doe"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all" />
+                </div>
+              </div>
+              <div className="mb-5">
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Email Address</label>
+                <input defaultValue={user?.email} type="email" placeholder="john@example.com"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all" />
+              </div>
+              <button onClick={onRegister} disabled={registering}
+                className="w-full text-white font-semibold py-3.5 rounded-full flex items-center justify-center gap-2 disabled:opacity-60 transition-opacity"
+                style={{ background: 'linear-gradient(135deg,#7C3AED,#4F46E5)' }}>
+                {registering ? 'Registering...' : (
+                  <>Complete Registration <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></>
+                )}
+              </button>
+              <p className="text-xs text-gray-400 text-center mt-3">By registering, you agree to Eventora's Terms of Service and Privacy Policy.</p>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 px-8 py-7 flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-3.5 h-3.5">
+              <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
+          <span className="font-bold text-sm text-white">Eventora</span>
+        </div>
+        <div className="flex gap-5 text-xs text-gray-400">
+          <a href="#" className="hover:text-white transition-colors">Privacy</a>
+          <a href="#" className="hover:text-white transition-colors">Terms</a>
+          <a href="#" className="hover:text-white transition-colors">Support</a>
+        </div>
+        <p className="text-xs text-gray-500">© {new Date().getFullYear()} Eventora Labs. All rights reserved.</p>
+      </footer>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // ROOT COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function EventSite() {
@@ -718,5 +1352,8 @@ export default function EventSite() {
 
   if (event.theme === 'modern') return <ModernTheme {...props} />;
   if (event.theme === 'academic') return <AcademicTheme {...props} />;
+  if (event.theme === 'corporate') return <CorporateTheme {...props} />;
+  if (event.theme === 'minimal') return <MinimalTheme {...props} />;
+  if (event.theme === 'vibrant') return <VibrantTheme {...props} />;
   return <DefaultTheme {...props} />;
 }
