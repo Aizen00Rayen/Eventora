@@ -571,6 +571,12 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
               </div>
             ) : (
               <div>
+                {event.ticket_type === 'paid' && (
+                  <div className="flex items-start gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl px-4 py-3 mb-4">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#facc15" strokeWidth="2" className="w-4 h-4 shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <p className="text-yellow-300 text-xs">This is a paid event (DZD {event.price}). You will need to upload a payment receipt when registering.</p>
+                  </div>
+                )}
                 <p className="text-gray-400 text-sm mb-5">Sign in to register for this event.</p>
                 <div className="flex gap-3">
                   <Link to="/login" className="flex-1 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 rounded-2xl text-center transition-colors">

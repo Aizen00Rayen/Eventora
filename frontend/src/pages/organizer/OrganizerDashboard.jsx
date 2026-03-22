@@ -8,6 +8,7 @@ import useAuthStore from '../../store/authStore';
 // ── QR Scan Modal ─────────────────────────────────────────────────────────────
 function QRScanModal({ open, onClose, onSuccess, onError }) {
   const html5QrRef = useRef(null);
+  const processingRef = useRef(false);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState(null);
 
@@ -18,6 +19,7 @@ function QRScanModal({ open, onClose, onSuccess, onError }) {
   }, [open]);
 
   const startCamera = async () => {
+    processingRef.current = false;
     setRunning(true);
     setResult(null);
     await new Promise(r => setTimeout(r, 150));
@@ -27,6 +29,8 @@ function QRScanModal({ open, onClose, onSuccess, onError }) {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 220, height: 220 } },
         async (text) => {
+          if (processingRef.current) return;
+          processingRef.current = true;
           await stopCamera();
           await handleValidate(text);
         },
@@ -49,11 +53,12 @@ function QRScanModal({ open, onClose, onSuccess, onError }) {
   const handleValidate = async (token) => {
     try {
       const { data } = await api.post('/api/registrations/validate-token/', { token });
-      setResult({ success: true, name: data.participant, detail: 'VIP Pass' });
+      setResult({ success: true, name: data.participant, detail: 'Checked in!' });
       onSuccess({ participant: data.participant, event: data.event });
     } catch (err) {
       const msg = err.response?.data?.detail || 'Invalid QR code';
-      setResult({ success: false, detail: msg });
+      const alreadyDone = msg === 'Already checked in.';
+      setResult({ success: false, alreadyDone, detail: alreadyDone ? 'Already checked in' : msg });
       onError(msg);
     }
   };
@@ -106,15 +111,17 @@ function QRScanModal({ open, onClose, onSuccess, onError }) {
               </>
             )}
             {result && (
-              <div className={`absolute inset-0 flex items-center justify-center ${result.success ? 'bg-green-500/90' : 'bg-red-500/90'}`}>
+              <div className={`absolute inset-0 flex items-center justify-center ${result.success ? 'bg-green-500/90' : result.alreadyDone ? 'bg-amber-500/90' : 'bg-red-500/90'}`}>
                 <div className="text-center text-white p-4">
                   <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-2">
                     {result.success
                       ? <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" className="w-7 h-7"><polyline points="20 6 9 17 4 12" /></svg>
-                      : <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" className="w-7 h-7"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                      : result.alreadyDone
+                        ? <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" className="w-7 h-7"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        : <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" className="w-7 h-7"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                     }
                   </div>
-                  <p className="font-bold">{result.success ? result.name : 'Invalid Ticket'}</p>
+                  <p className="font-bold">{result.success ? result.name : result.alreadyDone ? 'Already Checked In' : 'Invalid Ticket'}</p>
                   <p className="text-sm opacity-80">{result.detail}</p>
                 </div>
               </div>
@@ -131,8 +138,8 @@ function QRScanModal({ open, onClose, onSuccess, onError }) {
             </>
           )}
           {result && (
-            <p className={`font-semibold text-sm ${result.success ? 'text-green-600' : 'text-danger'}`}>
-              {result.success ? 'Check-in successful!' : 'Scan failed'}
+            <p className={`font-semibold text-sm ${result.success ? 'text-green-600' : result.alreadyDone ? 'text-amber-500' : 'text-danger'}`}>
+              {result.success ? 'Check-in successful!' : result.alreadyDone ? 'Already checked in' : 'Scan failed'}
             </p>
           )}
         </div>

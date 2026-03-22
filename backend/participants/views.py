@@ -109,7 +109,7 @@ class ValidateByTokenView(APIView):
             return Response({'detail': 'Token required.'}, status=status.HTTP_400_BAD_REQUEST)
         reg = get_object_or_404(Registration, token=token)
         if reg.is_present:
-            return Response({'detail': 'Already validated.', 'participant': reg.participant.get_full_name()}, status=status.HTTP_200_OK)
+            return Response({'detail': 'Already checked in.'}, status=status.HTTP_400_BAD_REQUEST)
         reg.is_present = True
         reg.save(update_fields=['is_present'])
         return Response({
