@@ -106,7 +106,7 @@ export default function Landing() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F4F3FF] font-sans">
+    <div className="min-h-screen bg-[#F4F3FF] font-sans scroll-smooth">
       {/* Navbar */}
       <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -129,7 +129,16 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section className="max-w-7xl mx-auto px-6 py-20 flex flex-col lg:flex-row items-center gap-16">
+      <section className="relative max-w-7xl mx-auto px-6 py-20 flex flex-col lg:flex-row items-center gap-16 overflow-hidden">
+        {/* Floating geometric shapes */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+          <div className="animate-float absolute top-10 left-[10%] w-16 h-16 rounded-full bg-primary/10 blur-sm" />
+          <div className="animate-float-slow absolute top-32 right-[15%] w-24 h-24 rounded-full bg-accent/10 blur-sm" />
+          <div className="animate-float-delayed absolute bottom-20 left-[20%] w-12 h-12 rounded-lg bg-primary/15 rotate-45 blur-[2px]" />
+          <div className="animate-float absolute top-1/2 right-[8%] w-10 h-10 rounded-full bg-violet-300/20 blur-sm" />
+          <div className="animate-float-slow absolute bottom-32 right-[30%] w-20 h-20 rounded-full bg-purple-200/20 blur-md" />
+          <div className="animate-float-delayed absolute top-16 left-[45%] w-8 h-8 rounded-md bg-primary/10 rotate-12 blur-[1px]" />
+        </div>
         {/* Left */}
         <motion.div
           className="flex-1"
@@ -142,7 +151,10 @@ export default function Landing() {
           </span>
           <h1 className="text-5xl sm:text-6xl font-extrabold text-gray-900 leading-[1.1] mb-6">
             Organize.<br />Connect.<br />
-            <span className="text-primary">Inspire.</span>
+            <span className="text-primary relative">
+              Inspire.
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[shimmer_2.5s_ease-in-out_infinite] bg-[length:200%_100%]" />
+            </span>
           </h1>
           <p className="text-gray-500 text-lg max-w-md mb-8 leading-relaxed">
             Eventora centralizes everything — event creation, speaker management, QR ticketing, and real-time stats — in one elegant platform.
@@ -214,17 +226,29 @@ export default function Landing() {
       {/* Stats bar */}
       <section className="bg-white border-y border-gray-100">
         <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {STATS.map((s) => (
-            <div key={s.label}>
+          {STATS.map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+            >
               <p className="text-3xl font-extrabold text-primary mb-1">{s.value}</p>
               <p className="text-xs font-semibold text-gray-400 tracking-widest uppercase">{s.label}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
 
       {/* Features */}
-      <section className="max-w-7xl mx-auto px-6 py-24">
+      <motion.section
+        className="max-w-7xl mx-auto px-6 py-24"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6 }}
+      >
         <div className="text-center mb-14">
           <h2 className="text-4xl font-extrabold text-gray-900 mb-3">Everything you need to scale</h2>
           <p className="text-gray-500 max-w-xl mx-auto">
@@ -239,9 +263,10 @@ export default function Landing() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.07 }}
-              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-card-hover transition-shadow"
+              className="group relative bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-card-hover hover:border-transparent transition-all duration-300"
             >
-              <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/50 via-accent/50 to-purple-500/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10 blur-[1px] scale-[1.02]" />
+              <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-white">
                 {f.icon}
               </div>
               <h3 className="font-bold text-lg text-gray-900 mb-2">{f.title}</h3>
@@ -249,10 +274,16 @@ export default function Landing() {
             </motion.div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* Live events near you */}
-      <section className="max-w-7xl mx-auto px-6 pb-24">
+      <motion.section
+        className="max-w-7xl mx-auto px-6 pb-24"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6 }}
+      >
         <div className="flex items-end justify-between mb-6">
           <div>
             <h2 className="text-3xl font-extrabold text-gray-900 mb-1">Live events near you</h2>
@@ -274,14 +305,15 @@ export default function Landing() {
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-card-hover transition-shadow cursor-pointer"
+              className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 cursor-pointer"
             >
               <div className="relative h-44 bg-gray-200 overflow-hidden">
                 {ev.img ? (
-                  <img src={ev.img} alt={ev.title} className="w-full h-full object-cover" />
+                  <img src={ev.img} alt={ev.title} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20" />
                 )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                 <span className="absolute top-3 left-3 bg-white text-gray-700 text-xs font-bold px-3 py-1 rounded-full tracking-widest uppercase shadow-sm">
                   {ev.category}
                 </span>
@@ -299,7 +331,7 @@ export default function Landing() {
             </motion.div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400">
@@ -358,7 +390,7 @@ export default function Landing() {
         </div>
         <div className="border-t border-gray-800">
           <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-xs gap-2">
-            <span>© 2024 Eventora Inc. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} Eventora Inc. All rights reserved.</span>
             <div className="flex gap-6">
               <span className="flex items-center gap-1">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import api from '../../utils/axios';
 import { formatDate } from '../../utils/formatters';
@@ -33,6 +33,85 @@ function IconUsers({ className = 'w-5 h-5' }) {
       <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
+  );
+}
+
+// ── Animated Countdown Timer ──────────────────────────────────────────────────
+function useCountdown(targetDate) {
+  const calcTimeLeft = useCallback(() => {
+    const diff = new Date(targetDate) - new Date();
+    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
+    return {
+      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+      minutes: Math.floor((diff / (1000 * 60)) % 60),
+      seconds: Math.floor((diff / 1000) % 60),
+      expired: false,
+    };
+  }, [targetDate]);
+  const [timeLeft, setTimeLeft] = useState(calcTimeLeft);
+  useEffect(() => {
+    const timer = setInterval(() => setTimeLeft(calcTimeLeft()), 1000);
+    return () => clearInterval(timer);
+  }, [calcTimeLeft]);
+  return timeLeft;
+}
+
+function CountdownTimer({ date, variant = 'dark' }) {
+  const { days, hours, minutes, seconds, expired } = useCountdown(date);
+  if (expired) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold ${variant === 'dark' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-green-100 text-green-700 border border-green-200'}`}>
+          <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
+          Event is Live!
+        </span>
+      </div>
+    );
+  }
+  const isUrgent = days < 3;
+  const units = [
+    { label: 'Days', value: days },
+    { label: 'Hours', value: hours },
+    { label: 'Minutes', value: minutes },
+    { label: 'Seconds', value: seconds },
+  ];
+  const cardClass = variant === 'dark'
+    ? `bg-white/5 backdrop-blur-sm border ${isUrgent ? 'border-red-500/40' : 'border-white/10'} rounded-xl`
+    : `bg-gray-900/5 border ${isUrgent ? 'border-red-300' : 'border-gray-200'} rounded-xl`;
+  const numClass = variant === 'dark'
+    ? `text-2xl sm:text-3xl font-extrabold tabular-nums ${isUrgent ? 'text-red-400' : 'text-white'}`
+    : `text-2xl sm:text-3xl font-extrabold tabular-nums ${isUrgent ? 'text-red-600' : 'text-gray-900'}`;
+  const labelClass = variant === 'dark' ? 'text-[10px] uppercase tracking-widest text-gray-400 mt-0.5' : 'text-[10px] uppercase tracking-widest text-gray-500 mt-0.5';
+
+  return (
+    <div>
+      {isUrgent && (
+        <p className={`text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5 ${variant === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
+          <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse-ring-red" />
+          Registration closing soon
+        </p>
+      )}
+      <div className="flex gap-2 sm:gap-3">
+        {units.map((u) => (
+          <div key={u.label} className={`${cardClass} px-3 sm:px-4 py-2.5 text-center min-w-[60px]`}>
+            <AnimatePresence mode="popLayout">
+              <motion.span
+                key={u.value}
+                initial={{ rotateX: 90, opacity: 0 }}
+                animate={{ rotateX: 0, opacity: 1 }}
+                exit={{ rotateX: -90, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className={`block ${numClass}`}
+              >
+                {String(u.value).padStart(2, '0')}
+              </motion.span>
+            </AnimatePresence>
+            <span className={labelClass}>{u.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -197,15 +276,29 @@ function ExhibitorStandSection({
 // ── Loading / Not Found (shared) ───────────────────────────────────────────────
 function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-      <div className="w-10 h-10 border-4 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center gap-6">
+      <div className="relative">
+        <div className="w-16 h-16 border-4 border-violet-500/20 rounded-full" />
+        <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-violet-500 rounded-full animate-spin" />
+      </div>
+      <div className="flex items-center gap-2 text-gray-400 text-sm">
+        <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
+        Loading event...
+      </div>
     </div>
   );
 }
 function NotFoundScreen() {
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center gap-4 text-white">
+    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center gap-6 text-white px-6">
+      <div className="w-20 h-20 rounded-full bg-gray-800 flex items-center justify-center mb-2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#6C47FF" strokeWidth="1.5" className="w-10 h-10">
+          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          <line x1="8" y1="11" x2="14" y2="11" />
+        </svg>
+      </div>
       <h2 className="text-2xl font-bold">Event not found</h2>
+      <p className="text-gray-400 text-sm max-w-xs text-center">The event you're looking for doesn't exist or may have been removed.</p>
       <Link to="/events" className="bg-violet-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-violet-700 transition-colors">
         Browse Events
       </Link>
@@ -248,13 +341,16 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
       {/* Hero */}
       <section className="relative min-h-screen flex flex-col overflow-hidden">
         {/* Background gradient + mesh */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-violet-950 to-gray-900" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-violet-950 to-gray-900 animate-gradient" />
         <div
           className="absolute inset-0 opacity-20"
           style={{
             backgroundImage: 'radial-gradient(circle at 30% 20%, #6C47FF 0%, transparent 50%), radial-gradient(circle at 80% 70%, #00D4AA 0%, transparent 50%)',
           }}
         />
+        {/* Floating orbs */}
+        <div className="absolute top-1/4 left-10 w-64 h-64 rounded-full bg-violet-600/10 blur-3xl animate-float" />
+        <div className="absolute bottom-1/4 right-10 w-48 h-48 rounded-full bg-cyan-500/10 blur-3xl animate-float-delayed" />
         <ModernNavbar event={event} />
 
         <div className="relative z-10 flex-1 flex items-center max-w-6xl mx-auto w-full px-8 pt-24 pb-16">
@@ -294,12 +390,17 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
               )}
             </div>
 
+            {/* Countdown */}
+            <div className="mb-8">
+              <CountdownTimer date={event.date} variant="dark" />
+            </div>
+
             <a
               href="#register"
-              className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold px-8 py-3.5 rounded-2xl transition-colors text-lg"
+              className="group inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white font-semibold px-8 py-3.5 rounded-2xl transition-all text-lg shadow-lg shadow-violet-600/25 hover:shadow-violet-600/40 hover:scale-[1.02]"
             >
               Register Now
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 group-hover:translate-x-1 transition-transform">
                 <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
               </svg>
             </a>
@@ -307,12 +408,18 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
 
           {/* Hero image card */}
           {event.logo && (
-            <div className="hidden lg:block ml-12">
-              <div className="relative w-72 h-72 rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-                <img src={`${API_BASE}${event.logo}`} alt={event.title} className="w-full h-full object-cover grayscale opacity-80" />
+            <motion.div
+              className="hidden lg:block ml-12"
+              initial={{ opacity: 0, scale: 0.9, rotate: 3 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
+              <div className="relative w-72 h-72 rounded-3xl overflow-hidden border border-white/10 shadow-2xl animate-float-slow group">
+                <img src={`${API_BASE}${event.logo}`} alt={event.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 opacity-80 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
+                <div className="absolute inset-0 animate-shimmer pointer-events-none" />
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
 
@@ -330,9 +437,11 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
       {/* About */}
       <section id="about" className="bg-gray-900 py-20 px-8">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold mb-2 text-white">About this event</h2>
-          <div className="w-12 h-1 bg-violet-600 rounded-full mb-6" />
-          <p className="text-gray-300 leading-relaxed text-lg">{event.description}</p>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <h2 className="text-3xl font-bold mb-2 text-white">About this event</h2>
+            <div className="w-12 h-1 bg-violet-600 rounded-full mb-6" />
+            <p className="text-gray-300 leading-relaxed text-lg">{event.description}</p>
+          </motion.div>
         </div>
       </section>
 
@@ -340,26 +449,36 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
       {event.speakers?.length > 0 && (
         <section id="speakers" className="bg-gray-950 py-20 px-8">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl font-bold mb-2 text-white">Speakers</h2>
-            <div className="w-12 h-1 bg-violet-600 rounded-full mb-10" />
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <h2 className="text-3xl font-bold mb-2 text-white">Speakers</h2>
+              <div className="w-12 h-1 bg-violet-600 rounded-full mb-10" />
+            </motion.div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {event.speakers.map((sp) => (
-                <div key={sp.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-center hover:border-violet-500/50 transition-colors">
+              {event.speakers.map((sp, idx) => (
+                <motion.div
+                  key={sp.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                  whileHover={{ y: -6, transition: { duration: 0.2 } }}
+                  className="bg-gray-900 border border-gray-800 rounded-2xl p-6 text-center hover:border-violet-500/50 transition-colors group"
+                >
                   {sp.photo ? (
                     <img
                       src={`${API_BASE}${sp.photo}`}
                       alt={sp.first_name}
-                      className="w-20 h-20 rounded-full object-cover mx-auto mb-4 grayscale hover:grayscale-0 transition-all border-2 border-gray-700"
+                      className="w-20 h-20 rounded-full object-cover mx-auto mb-4 grayscale group-hover:grayscale-0 transition-all duration-500 border-2 border-gray-700 group-hover:border-violet-500 group-hover:scale-110"
                     />
                   ) : (
-                    <div className="w-20 h-20 rounded-full bg-violet-900/50 border-2 border-violet-700/30 flex items-center justify-center text-violet-400 text-2xl font-bold mx-auto mb-4">
+                    <div className="w-20 h-20 rounded-full bg-violet-900/50 border-2 border-violet-700/30 flex items-center justify-center text-violet-400 text-2xl font-bold mx-auto mb-4 group-hover:bg-violet-800/60 group-hover:border-violet-500 transition-all">
                       {sp.first_name[0]}
                     </div>
                   )}
                   <h3 className="font-bold text-white">{sp.first_name} {sp.last_name}</h3>
                   <p className="text-sm text-violet-400 mt-1">{sp.title}</p>
                   {sp.bio && <p className="text-xs text-gray-500 mt-2 line-clamp-3">{sp.bio}</p>}
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -387,9 +506,10 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
       )}
 
       {/* Registration */}
-      <section id="register" className="bg-gray-950 py-20 px-8">
-        <div className="max-w-lg mx-auto">
-          <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8">
+      <section id="register" className="bg-gray-950 py-20 px-8 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 50% 0%, #6C47FF20 0%, transparent 60%)' }} />
+        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-lg mx-auto relative z-10">
+          <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 shadow-2xl shadow-violet-500/5">
             <h2 className="text-2xl font-bold text-white mb-1">Secure your spot</h2>
             <p className="text-gray-400 text-sm mb-6">Limited seats available — register now.</p>
             {registered ? (
@@ -453,6 +573,7 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
             )}
           </div>
         </div>
+        </motion.div>
       </section>
 
       {/* Exhibitor Stands */}
@@ -573,9 +694,14 @@ function AcademicTheme({ event, onRegister, registering, registered, user, payme
             )}
           </div>
 
+          {/* Countdown */}
+          <div className="mt-8">
+            <CountdownTimer date={event.date} variant="dark" />
+          </div>
+
           <a
             href="#register"
-            className="inline-flex items-center gap-2 bg-yellow-600 hover:bg-yellow-700 text-gray-950 font-bold px-8 py-3.5 rounded-2xl transition-colors text-base"
+            className="inline-flex items-center gap-2 bg-yellow-600 hover:bg-yellow-700 text-gray-950 font-bold px-8 py-3.5 rounded-2xl transition-all text-base mt-8 shadow-lg shadow-yellow-600/20 hover:scale-[1.02]"
           >
             Register as Delegate
           </a>
@@ -584,13 +710,13 @@ function AcademicTheme({ event, onRegister, registering, registered, user, payme
 
       {/* About */}
       <section id="about" className="py-16 px-8" style={{ backgroundColor: '#0D1425' }}>
-        <div className="max-w-4xl mx-auto">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-4xl mx-auto">
           <div className="flex items-center gap-4 mb-6">
             <h2 className="text-2xl font-bold" style={{ color: '#EDE9D5' }}>Conference Overview</h2>
             <div className="flex-1 h-px bg-yellow-700/20" />
           </div>
           <p className="text-gray-400 leading-relaxed text-base">{event.description}</p>
-        </div>
+        </motion.div>
       </section>
 
       {/* Distinguished Faculty / Speakers */}
@@ -602,17 +728,22 @@ function AcademicTheme({ event, onRegister, registering, registered, user, payme
               <div className="flex-1 h-px bg-yellow-700/20" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {event.speakers.map((sp) => (
-                <div
+              {event.speakers.map((sp, idx) => (
+                <motion.div
                   key={sp.id}
-                  className="border rounded-2xl p-6 text-center transition-colors"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                  whileHover={{ y: -6, transition: { duration: 0.2 } }}
+                  className="border rounded-2xl p-6 text-center transition-colors group"
                   style={{ borderColor: 'rgba(212,160,23,0.2)', backgroundColor: 'rgba(212,160,23,0.03)' }}
                 >
                   {sp.photo ? (
                     <img
                       src={`${API_BASE}${sp.photo}`}
                       alt={sp.first_name}
-                      className="w-20 h-20 rounded-full object-cover mx-auto mb-4 grayscale border-2"
+                      className="w-20 h-20 rounded-full object-cover mx-auto mb-4 grayscale group-hover:grayscale-0 transition-all duration-500 border-2 group-hover:scale-110"
                       style={{ borderColor: 'rgba(212,160,23,0.4)' }}
                     />
                   ) : (
@@ -626,7 +757,7 @@ function AcademicTheme({ event, onRegister, registering, registered, user, payme
                   <h3 className="font-bold" style={{ color: '#EDE9D5' }}>Prof. {sp.first_name} {sp.last_name}</h3>
                   <p className="text-sm mt-1" style={{ color: '#d4a017' }}>{sp.title}</p>
                   {sp.bio && <p className="text-xs text-gray-500 mt-2 line-clamp-3">{sp.bio}</p>}
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -825,6 +956,10 @@ function DefaultTheme({ event, onRegister, registering, registered, user, paymen
               <span className="flex items-center gap-2">DZD {event.price}</span>
             )}
           </div>
+          {/* Countdown */}
+          <div className="mt-8 flex justify-center">
+            <CountdownTimer date={event.date} variant="dark" />
+          </div>
         </div>
       </section>
 
@@ -1003,7 +1138,11 @@ function CorporateTheme({ event, onRegister, registering, registered, user, paym
             </span>
           )}
         </div>
-        <a href="#register" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3.5 rounded-2xl transition-colors text-base">
+        {/* Countdown */}
+        <div className="mt-6 mb-8 flex justify-center">
+          <CountdownTimer date={event.date} variant="light" />
+        </div>
+        <a href="#register" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3.5 rounded-2xl transition-all text-base shadow-lg shadow-blue-600/20 hover:scale-[1.02]">
           Secure Your Spot
         </a>
       </section>
@@ -1262,7 +1401,8 @@ function MinimalTheme({ event, onRegister, registering, registered, user, paymen
         >
           {event.title.toUpperCase()}.
         </motion.h1>
-        <p className="text-gray-400 text-base max-w-lg leading-relaxed">{event.description?.slice(0, 160)}{event.description?.length > 160 ? '…' : ''}</p>
+        <p className="text-gray-400 text-base max-w-lg leading-relaxed mb-10">{event.description?.slice(0, 160)}{event.description?.length > 160 ? '…' : ''}</p>
+        <CountdownTimer date={event.date} variant="light" />
       </section>
 
       {/* About */}
@@ -1469,7 +1609,11 @@ function VibrantTheme({ event, onRegister, registering, registered, user, paymen
               </span>
             )}
           </div>
-          <a href="#register" className="inline-block border-2 border-white text-white font-semibold px-8 py-3 rounded-full hover:bg-white hover:text-violet-700 transition-colors">
+          {/* Countdown */}
+          <div className="mt-8 mb-6">
+            <CountdownTimer date={event.date} variant="dark" />
+          </div>
+          <a href="#register" className="inline-block border-2 border-white text-white font-semibold px-8 py-3 rounded-full hover:bg-white hover:text-violet-700 transition-all hover:scale-[1.02] shadow-lg shadow-white/10">
             Register now
           </a>
         </section>
