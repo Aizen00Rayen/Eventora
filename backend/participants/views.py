@@ -237,3 +237,73 @@ class MyExhibitorStandsView(generics.ListAPIView):
 
     def get_queryset(self):
         return ExhibitorStand.objects.filter(exhibitor=self.request.user).select_related('event')
+
+
+# ── Client payment management (own events only) ───────────────────────────────
+
+class ClientEventRegistrationsView(generics.ListAPIView):
+    """Client lists registrations for one of their own events."""
+    serializer_class = RegistrationSerializer
+    permission_classes = [IsClientUser]
+
+    def get_queryset(self):
+        event = get_object_or_404(Event, pk=self.kwargs['event_id'], client=self.request.user)
+        qs = Registration.objects.filter(event=event).select_related('participant', 'event').order_by('-registered_at')
+        payment_status = self.request.query_params.get('payment_status')
+        if payment_status:
+            qs = qs.filter(payment_status=payment_status)
+        return qs
+
+
+class ClientApprovePaymentView(APIView):
+    permission_classes = [IsClientUser]
+
+    def patch(self, request, pk):
+        reg = get_object_or_404(Registration, pk=pk, event__client=request.user)
+        reg.payment_status = 'approved'
+        reg.save(update_fields=['payment_status'])
+        return Response(RegistrationSerializer(reg).data)
+
+
+class ClientRejectPaymentView(APIView):
+    permission_classes = [IsClientUser]
+
+    def patch(self, request, pk):
+        reg = get_object_or_404(Registration, pk=pk, event__client=request.user)
+        reg.payment_status = 'rejected'
+        reg.save(update_fields=['payment_status'])
+        return Response(RegistrationSerializer(reg).data)
+
+
+class ClientEventExhibitorStandsView(generics.ListAPIView):
+    """Client lists exhibitor stands for one of their own events."""
+    serializer_class = ExhibitorStandSerializer
+    permission_classes = [IsClientUser]
+
+    def get_queryset(self):
+        event = get_object_or_404(Event, pk=self.kwargs['event_id'], client=self.request.user)
+        qs = ExhibitorStand.objects.filter(event=event).select_related('exhibitor', 'event').order_by('-registered_at')
+        payment_status = self.request.query_params.get('payment_status')
+        if payment_status:
+            qs = qs.filter(payment_status=payment_status)
+        return qs
+
+
+class ClientApproveExhibitorPaymentView(APIView):
+    permission_classes = [IsClientUser]
+
+    def patch(self, request, pk):
+        stand = get_object_or_404(ExhibitorStand, pk=pk, event__client=request.user)
+        stand.payment_status = 'approved'
+        stand.save(update_fields=['payment_status'])
+        return Response(ExhibitorStandSerializer(stand).data)
+
+
+class ClientRejectExhibitorPaymentView(APIView):
+    permission_classes = [IsClientUser]
+
+    def patch(self, request, pk):
+        stand = get_object_or_404(ExhibitorStand, pk=pk, event__client=request.user)
+        stand.payment_status = 'rejected'
+        stand.save(update_fields=['payment_status'])
+        return Response(ExhibitorStandSerializer(stand).data)

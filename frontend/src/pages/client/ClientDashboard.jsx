@@ -56,6 +56,15 @@ function IconBarChart({ className = 'w-5 h-5' }) {
     </svg>
   );
 }
+function IconReceipt({ className = 'w-5 h-5' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
+    </svg>
+  );
+}
 function IconBell({ className = 'w-5 h-5' }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
@@ -85,6 +94,7 @@ const SIDEBAR_LINKS = [
   { to: '/client/speakers', icon: <IconUsers />, label: 'Speakers' },
   { to: '/client/sponsors', icon: <IconStar />, label: 'Sponsors' },
   { to: '/client/organizers', icon: <IconUsers />, label: 'Organizers' },
+  { to: '/client/payments', icon: <IconReceipt />, label: 'Payments' },
   { to: '/client/stats', icon: <IconBarChart />, label: 'Statistics' },
 ];
 
@@ -915,6 +925,198 @@ function StatsPage() {
   );
 }
 
+// ── Payments Page ─────────────────────────────────────────────────────────────
+const STATUS_BADGE = {
+  pending:  'bg-yellow-100 text-yellow-700',
+  approved: 'bg-green-100 text-green-700',
+  rejected: 'bg-red-100 text-red-700',
+};
+
+function PaymentsPage() {
+  const [events, setEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState('');
+  const [tab, setTab] = useState('registrations'); // 'registrations' | 'stands'
+  const [registrations, setRegistrations] = useState([]);
+  const [stands, setStands] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  useEffect(() => {
+    api.get('/api/events/').then(({ data }) => {
+      const evs = data.results || data;
+      setEvents(evs);
+      if (evs.length > 0) setSelectedEvent(evs[0].id);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!selectedEvent) return;
+    setLoading(true);
+    const regsPromise = api.get(`/api/client/events/${selectedEvent}/registrations/`).then(({ data }) => setRegistrations(data.results || data)).catch(() => setRegistrations([]));
+    const standsPromise = api.get(`/api/client/events/${selectedEvent}/exhibitor-stands/`).then(({ data }) => setStands(data.results || data)).catch(() => setStands([]));
+    Promise.all([regsPromise, standsPromise]).finally(() => setLoading(false));
+  }, [selectedEvent]);
+
+  const approveReg = async (id) => {
+    setActionLoading(true);
+    try {
+      const { data } = await api.patch(`/api/client/registrations/${id}/approve/`);
+      setRegistrations((prev) => prev.map((r) => r.id === id ? data : r));
+      toast.success('Payment approved');
+    } catch { toast.error('Failed'); } finally { setActionLoading(false); }
+  };
+
+  const rejectReg = async (id) => {
+    setActionLoading(true);
+    try {
+      const { data } = await api.patch(`/api/client/registrations/${id}/reject/`);
+      setRegistrations((prev) => prev.map((r) => r.id === id ? data : r));
+      toast.success('Payment rejected');
+    } catch { toast.error('Failed'); } finally { setActionLoading(false); }
+  };
+
+  const approveStand = async (id) => {
+    setActionLoading(true);
+    try {
+      const { data } = await api.patch(`/api/client/exhibitor-stands/${id}/approve/`);
+      setStands((prev) => prev.map((s) => s.id === id ? data : s));
+      toast.success('Stand payment approved');
+    } catch { toast.error('Failed'); } finally { setActionLoading(false); }
+  };
+
+  const rejectStand = async (id) => {
+    setActionLoading(true);
+    try {
+      const { data } = await api.patch(`/api/client/exhibitor-stands/${id}/reject/`);
+      setStands((prev) => prev.map((s) => s.id === id ? data : s));
+      toast.success('Stand payment rejected');
+    } catch { toast.error('Failed'); } finally { setActionLoading(false); }
+  };
+
+  const selectedEventObj = events.find((e) => String(e.id) === String(selectedEvent));
+  const isPaid = selectedEventObj?.ticket_type === 'paid';
+
+  return (
+    <div className="flex-1 p-8 overflow-y-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Payments & Registrations</h1>
+      </div>
+
+      <select className="input max-w-xs mb-6" value={selectedEvent} onChange={(e) => setSelectedEvent(e.target.value)}>
+        {events.map((ev) => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
+      </select>
+
+      {/* Tabs */}
+      <div className="flex gap-2 mb-6">
+        {['registrations', 'stands'].map((t) => (
+          <button key={t} onClick={() => setTab(t)}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${tab === t ? 'bg-primary text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-primary/40'}`}>
+            {t === 'registrations' ? 'Registrations' : 'Exhibitor Stands'}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="space-y-3">{[1,2,3].map((n) => <div key={n} className="h-16 bg-gray-100 rounded-xl animate-pulse" />)}</div>
+      ) : tab === 'registrations' ? (
+        registrations.length === 0 ? <EmptyState title="No registrations yet" /> : (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 text-left">
+                  <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Participant</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Payment</th>
+                  {isPaid && <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Receipt</th>}
+                  {isPaid && <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {registrations.map((r) => (
+                  <tr key={r.id} className="hover:bg-gray-50/50">
+                    <td className="px-5 py-3">
+                      <p className="font-medium text-sm">{r.participant?.first_name} {r.participant?.last_name}</p>
+                      <p className="text-xs text-gray-400">{r.participant?.email}</p>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{r.registered_at ? new Date(r.registered_at).toLocaleDateString() : '—'}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STATUS_BADGE[r.payment_status] || ''}`}>{r.payment_status}</span>
+                    </td>
+                    {isPaid && (
+                      <td className="px-4 py-3">
+                        {r.payment_receipt
+                          ? <a href={`${API_BASE}${r.payment_receipt}`} target="_blank" rel="noreferrer" className="text-primary text-xs font-semibold hover:underline">View Receipt</a>
+                          : <span className="text-xs text-gray-400">No receipt</span>}
+                      </td>
+                    )}
+                    {isPaid && (
+                      <td className="px-4 py-3">
+                        {r.payment_status === 'pending' && (
+                          <div className="flex gap-2">
+                            <button disabled={actionLoading} onClick={() => approveReg(r.id)} className="text-xs font-semibold bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-lg hover:bg-green-100 transition-colors">Approve</button>
+                            <button disabled={actionLoading} onClick={() => rejectReg(r.id)} className="text-xs font-semibold bg-red-50 text-red-700 border border-red-200 px-3 py-1 rounded-lg hover:bg-red-100 transition-colors">Reject</button>
+                          </div>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : (
+        stands.length === 0 ? <EmptyState title="No exhibitor stand applications yet" /> : (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 text-left">
+                  <th className="px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Exhibitor</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Company</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Stand</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Price</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Receipt</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {stands.map((s) => (
+                  <tr key={s.id} className="hover:bg-gray-50/50">
+                    <td className="px-5 py-3">
+                      <p className="font-medium text-sm">{s.exhibitor?.first_name} {s.exhibitor?.last_name}</p>
+                      <p className="text-xs text-gray-400">{s.exhibitor?.email}</p>
+                    </td>
+                    <td className="px-4 py-3 text-sm">{s.company_name}</td>
+                    <td className="px-4 py-3 text-sm capitalize">{s.stand_type}</td>
+                    <td className="px-4 py-3 text-sm">DZD {s.price?.toLocaleString()}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STATUS_BADGE[s.payment_status] || ''}`}>{s.payment_status}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {s.payment_receipt
+                        ? <a href={`${API_BASE}${s.payment_receipt}`} target="_blank" rel="noreferrer" className="text-primary text-xs font-semibold hover:underline">View Receipt</a>
+                        : <span className="text-xs text-gray-400">—</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      {s.payment_status === 'pending' && (
+                        <div className="flex gap-2">
+                          <button disabled={actionLoading} onClick={() => approveStand(s.id)} className="text-xs font-semibold bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-lg hover:bg-green-100 transition-colors">Approve</button>
+                          <button disabled={actionLoading} onClick={() => rejectStand(s.id)} className="text-xs font-semibold bg-red-50 text-red-700 border border-red-200 px-3 py-1 rounded-lg hover:bg-red-100 transition-colors">Reject</button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
 // ── Layout ───────────────────────────────────────────────────────────────────
 export default function ClientDashboard() {
   return (
@@ -928,6 +1130,7 @@ export default function ClientDashboard() {
           <Route path="speakers" element={<SpeakersPage />} />
           <Route path="sponsors" element={<SponsorsPage />} />
           <Route path="organizers" element={<OrganizersPage />} />
+          <Route path="payments" element={<PaymentsPage />} />
           <Route path="stats" element={<StatsPage />} />
         </Routes>
       </div>
