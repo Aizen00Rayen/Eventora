@@ -572,7 +572,6 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
               </div>
             )}
           </div>
-        </div>
         </motion.div>
       </section>
 
