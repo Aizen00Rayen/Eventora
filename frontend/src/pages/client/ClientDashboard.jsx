@@ -392,6 +392,7 @@ function MyEvents() {
 
 // ── Speakers Page ────────────────────────────────────────────────────────────
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const mediaUrl = (p) => { if (!p) return ''; return p.startsWith('http') ? p : `${API_BASE}${p}`; };
 
 function SpeakersPage() {
   const [events, setEvents] = useState([]);
@@ -459,7 +460,7 @@ function SpeakersPage() {
           {speakers.map((sp) => (
             <div key={sp.id} className="card flex items-start gap-4">
               {sp.photo
-                ? <img src={`${API_BASE}${sp.photo}`} alt={sp.first_name} className="w-12 h-12 rounded-full object-cover shrink-0" />
+                ? <img src={mediaUrl(sp.photo)} alt={sp.first_name} className="w-12 h-12 rounded-full object-cover shrink-0" />
                 : <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg shrink-0">{sp.first_name[0]}</div>
               }
               <div className="flex-1 min-w-0">
@@ -543,7 +544,7 @@ function SponsorsPage() {
           <div className="flex flex-wrap gap-4">
             {sponsors.map((sp) => (
               <div key={sp.id} className="card flex items-center gap-3 py-3 px-5">
-                {sp.logo && <img src={`${API_BASE}${sp.logo}`} alt={sp.name} className="h-8 object-contain" />}
+                {sp.logo && <img src={mediaUrl(sp.logo)} alt={sp.name} className="h-8 object-contain" />}
                 <span className="font-bold">{sp.name}</span>
                 <button onClick={async () => { await api.delete(`/api/sponsors/${sp.id}/`); setSponsors((p) => p.filter((s) => s.id !== sp.id)); toast.success('Removed'); }} className="text-danger text-sm">🗑️</button>
               </div>
@@ -1045,7 +1046,7 @@ function PaymentsPage() {
                     {isPaid && (
                       <td className="px-4 py-3">
                         {r.payment_receipt
-                          ? <a href={`${API_BASE}${r.payment_receipt}`} target="_blank" rel="noreferrer" className="text-primary text-xs font-semibold hover:underline">View Receipt</a>
+                          ? <a href={mediaUrl(r.payment_receipt)} target="_blank" rel="noreferrer" className="text-primary text-xs font-semibold hover:underline">View Receipt</a>
                           : <span className="text-xs text-gray-400">No receipt</span>}
                       </td>
                     )}
@@ -1095,7 +1096,7 @@ function PaymentsPage() {
                     </td>
                     <td className="px-4 py-3">
                       {s.payment_receipt
-                        ? <a href={`${API_BASE}${s.payment_receipt}`} target="_blank" rel="noreferrer" className="text-primary text-xs font-semibold hover:underline">View Receipt</a>
+                        ? <a href={mediaUrl(s.payment_receipt)} target="_blank" rel="noreferrer" className="text-primary text-xs font-semibold hover:underline">View Receipt</a>
                         : <span className="text-xs text-gray-400">—</span>}
                     </td>
                     <td className="px-4 py-3">

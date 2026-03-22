@@ -7,6 +7,7 @@ import { formatDate, getInitials } from '../../utils/formatters';
 import useAuthStore from '../../store/authStore';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const mediaUrl = (p) => { if (!p) return ''; return p.startsWith('http') ? p : `${API_BASE}${p}`; };
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 function IconCalendar({ className = 'w-4 h-4' }) {
@@ -69,16 +70,22 @@ function ParticipantNavbar() {
   const { user, logout } = useAuthStore();
   return (
     <nav className="bg-white border-b border-gray-100 px-6 h-16 flex items-center justify-between shrink-0">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-4 h-4">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-4 h-4">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
+          <span className="font-bold text-lg text-primary">Eventora</span>
         </div>
-        <span className="font-bold text-lg text-primary">Eventora</span>
+        <div className="hidden sm:flex items-center gap-4 text-sm font-medium">
+          <Link to="/events" className="text-gray-500 hover:text-primary transition-colors">Browse Events</Link>
+          <Link to="/my-tickets" className="text-gray-500 hover:text-primary transition-colors">My Tickets</Link>
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold">
@@ -146,7 +153,7 @@ function TicketCard({ reg }) {
       <div className="w-44 shrink-0 p-5 flex flex-col items-center justify-center bg-gray-50">
         {reg.qr_code ? (
           <img
-            src={`${API_BASE}${reg.qr_code}`}
+            src={mediaUrl(reg.qr_code)}
             alt="QR Code"
             className="w-28 h-28 object-contain mb-2"
           />
@@ -173,7 +180,7 @@ function AttestationRow({ reg, onDownload }) {
       {/* Thumbnail */}
       <div className="w-14 h-14 rounded-xl shrink-0 overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
         {reg.event?.logo ? (
-          <img src={`${API_BASE}${reg.event.logo}`} alt={reg.event.title} className="w-full h-full object-cover" />
+          <img src={mediaUrl(reg.event.logo)} alt={reg.event.title} className="w-full h-full object-cover" />
         ) : (
           <IconCalendar className="w-6 h-6 text-primary/50" />
         )}

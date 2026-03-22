@@ -7,6 +7,7 @@ import { formatDate } from '../../utils/formatters';
 import useAuthStore from '../../store/authStore';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const mediaUrl = (p) => { if (!p) return ''; return p.startsWith('http') ? p : `${API_BASE}${p}`; };
 
 // ── Shared icons ──────────────────────────────────────────────────────────────
 function IconCalendar({ className = 'w-5 h-5' }) {
@@ -310,26 +311,36 @@ function NotFoundScreen() {
 // MODERN THEME
 // ═══════════════════════════════════════════════════════════════════════════════
 function ModernNavbar({ event }) {
+  const { user } = useAuthStore();
+  const dashPath = user?.role === 'client' ? '/client' : user?.role === 'organizer' ? '/organizer' : user?.role === 'admin' ? '/admin' : '/my-tickets';
   return (
     <nav className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-5">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-4 h-4">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
+      <div className="flex items-center gap-4">
+        <Link to="/events" className="flex items-center gap-1 text-white/60 hover:text-white text-sm transition-colors">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><polyline points="15 18 9 12 15 6"/></svg>
+          Events
+        </Link>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-4 h-4">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
+          <span className="font-bold text-white text-lg">Eventora</span>
         </div>
-        <span className="font-bold text-white text-lg">Eventora</span>
       </div>
       <div className="hidden md:flex items-center gap-6 text-sm text-white/70">
         <a href="#about" className="hover:text-white transition-colors">About</a>
         <a href="#speakers" className="hover:text-white transition-colors">Speakers</a>
         <a href="#sponsors" className="hover:text-white transition-colors">Sponsors</a>
         <a href="#exhibitor" className="hover:text-white transition-colors">Exhibit</a>
-        <a href="#register" className="bg-violet-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-violet-700 transition-colors">
-          Register
-        </a>
+        {user
+          ? <Link to={dashPath} className="text-white/70 hover:text-white transition-colors">Dashboard</Link>
+          : <Link to="/login" className="text-white/70 hover:text-white transition-colors">Sign In</Link>
+        }
+        <a href="#register" className="bg-violet-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-violet-700 transition-colors">Register</a>
       </div>
     </nav>
   );
@@ -415,7 +426,7 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
               transition={{ duration: 0.8, delay: 0.3 }}
             >
               <div className="relative w-72 h-72 rounded-3xl overflow-hidden border border-white/10 shadow-2xl animate-float-slow group">
-                <img src={`${API_BASE}${event.logo}`} alt={event.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 opacity-80 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110" />
+                <img src={mediaUrl(event.logo)} alt={event.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 opacity-80 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
                 <div className="absolute inset-0 animate-shimmer pointer-events-none" />
               </div>
@@ -466,7 +477,7 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
                 >
                   {sp.photo ? (
                     <img
-                      src={`${API_BASE}${sp.photo}`}
+                      src={mediaUrl(sp.photo)}
                       alt={sp.first_name}
                       className="w-20 h-20 rounded-full object-cover mx-auto mb-4 grayscale group-hover:grayscale-0 transition-all duration-500 border-2 border-gray-700 group-hover:border-violet-500 group-hover:scale-110"
                     />
@@ -495,7 +506,7 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
               {event.sponsors.map((sp) => (
                 <div key={sp.id} className="bg-gray-800 border border-gray-700 rounded-2xl px-6 py-4 flex items-center gap-3 hover:border-violet-500/40 transition-colors">
                   {sp.logo
-                    ? <img src={`${API_BASE}${sp.logo}`} alt={sp.name} className="h-8 object-contain filter brightness-75 hover:brightness-100 transition-all" />
+                    ? <img src={mediaUrl(sp.logo)} alt={sp.name} className="h-8 object-contain filter brightness-75 hover:brightness-100 transition-all" />
                     : <span className="font-bold text-gray-300">{sp.name}</span>
                   }
                 </div>
@@ -599,23 +610,35 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
 // ACADEMIC THEME
 // ═══════════════════════════════════════════════════════════════════════════════
 function AcademicNavbar({ event }) {
+  const { user } = useAuthStore();
+  const dashPath = user?.role === 'client' ? '/client' : user?.role === 'organizer' ? '/organizer' : user?.role === 'admin' ? '/admin' : '/my-tickets';
   return (
     <nav className="relative z-20 border-b border-yellow-900/30 flex items-center justify-between px-8 py-4 bg-navy-950/80 backdrop-blur-sm">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-yellow-600/20 border border-yellow-600/40 flex items-center justify-center">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#d4a017" strokeWidth="1.5" className="w-5 h-5">
-            <path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" />
-          </svg>
-        </div>
-        <div>
-          <p className="font-bold text-yellow-200 text-sm leading-none">Eventora</p>
-          <p className="text-yellow-600 text-xs">Academic Conference</p>
+      <div className="flex items-center gap-4">
+        <Link to="/events" className="flex items-center gap-1 text-yellow-600 hover:text-yellow-400 text-sm transition-colors">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><polyline points="15 18 9 12 15 6"/></svg>
+          Events
+        </Link>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-yellow-600/20 border border-yellow-600/40 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#d4a017" strokeWidth="1.5" className="w-5 h-5">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c3 3 9 3 12 0v-5" />
+            </svg>
+          </div>
+          <div>
+            <p className="font-bold text-yellow-200 text-sm leading-none">Eventora</p>
+            <p className="text-yellow-600 text-xs">Academic Conference</p>
+          </div>
         </div>
       </div>
       <div className="hidden md:flex items-center gap-6 text-sm text-yellow-200/70">
         <a href="#about" className="hover:text-yellow-200 transition-colors">Overview</a>
         <a href="#speakers" className="hover:text-yellow-200 transition-colors">Faculty</a>
         <a href="#sponsors" className="hover:text-yellow-200 transition-colors">Partners</a>
+        {user
+          ? <Link to={dashPath} className="text-yellow-200/70 hover:text-yellow-200 transition-colors">Dashboard</Link>
+          : <Link to="/login" className="text-yellow-200/70 hover:text-yellow-200 transition-colors">Sign In</Link>
+        }
         <a href="#register" className="bg-yellow-600 hover:bg-yellow-700 text-gray-950 font-bold px-4 py-2 rounded-xl transition-colors">
           Register
         </a>
@@ -658,7 +681,7 @@ function AcademicTheme({ event, onRegister, registering, registered, user, payme
 
           {event.logo && (
             <div className="w-16 h-16 rounded-2xl overflow-hidden mx-auto mb-6 border-2 border-yellow-600/30">
-              <img src={`${API_BASE}${event.logo}`} alt={event.title} className="w-full h-full object-cover" />
+              <img src={mediaUrl(event.logo)} alt={event.title} className="w-full h-full object-cover" />
             </div>
           )}
 
@@ -740,7 +763,7 @@ function AcademicTheme({ event, onRegister, registering, registered, user, payme
                 >
                   {sp.photo ? (
                     <img
-                      src={`${API_BASE}${sp.photo}`}
+                      src={mediaUrl(sp.photo)}
                       alt={sp.first_name}
                       className="w-20 h-20 rounded-full object-cover mx-auto mb-4 grayscale group-hover:grayscale-0 transition-all duration-500 border-2 group-hover:scale-110"
                       style={{ borderColor: 'rgba(212,160,23,0.4)' }}
@@ -779,7 +802,7 @@ function AcademicTheme({ event, onRegister, registering, registered, user, payme
                   style={{ borderColor: 'rgba(212,160,23,0.2)', backgroundColor: 'rgba(212,160,23,0.04)' }}
                 >
                   {sp.logo
-                    ? <img src={`${API_BASE}${sp.logo}`} alt={sp.name} className="h-8 object-contain opacity-70 hover:opacity-100 transition-opacity" />
+                    ? <img src={mediaUrl(sp.logo)} alt={sp.name} className="h-8 object-contain opacity-70 hover:opacity-100 transition-opacity" />
                     : <span className="font-bold text-sm" style={{ color: '#d4a017' }}>{sp.name}</span>
                   }
                 </div>
@@ -932,13 +955,25 @@ function AcademicTheme({ event, onRegister, registering, registered, user, payme
 // DEFAULT / FALLBACK THEME
 // ═══════════════════════════════════════════════════════════════════════════════
 function DefaultTheme({ event, onRegister, registering, registered, user, paymentReceipt, setPaymentReceipt, onStandRegister, standRegistering, standRegistered, standType, setStandType, exhibitorCompany, setExhibitorCompany, exhibitorReceipt, setExhibitorReceipt }) {
+  const dashPath = user?.role === 'client' ? '/client' : user?.role === 'organizer' ? '/organizer' : user?.role === 'admin' ? '/admin' : '/my-tickets';
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Top nav */}
+      <nav className="bg-white border-b border-gray-100 px-6 h-14 flex items-center justify-between">
+        <Link to="/events" className="flex items-center gap-1.5 text-gray-500 hover:text-primary text-sm font-medium transition-colors">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><polyline points="15 18 9 12 15 6"/></svg>
+          All Events
+        </Link>
+        {user
+          ? <Link to={dashPath} className="text-sm text-gray-500 hover:text-primary transition-colors font-medium">My Dashboard</Link>
+          : <div className="flex gap-3 text-sm"><Link to="/login" className="text-gray-500 hover:text-primary transition-colors">Sign In</Link><Link to="/register" className="bg-primary text-white px-3 py-1.5 rounded-lg font-semibold hover:bg-primary/90 transition-colors">Sign Up</Link></div>
+        }
+      </nav>
       {/* Hero */}
       <section className={`bg-gradient-to-br from-violet-900 via-purple-800 to-indigo-900 text-white py-24 px-4`}>
         <div className="max-w-4xl mx-auto text-center">
           {event.logo && (
-            <img src={`${API_BASE}${event.logo}`} alt={event.title} className="w-20 h-20 rounded-2xl object-cover mx-auto mb-6 border-4 border-white/20" />
+            <img src={mediaUrl(event.logo)} alt={event.title} className="w-20 h-20 rounded-2xl object-cover mx-auto mb-6 border-4 border-white/20" />
           )}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -975,7 +1010,7 @@ function DefaultTheme({ event, onRegister, registering, registered, user, paymen
               {event.speakers.map((sp) => (
                 <div key={sp.id} className="bg-white rounded-2xl border border-gray-100 p-6 text-center shadow-sm">
                   {sp.photo ? (
-                    <img src={`${API_BASE}${sp.photo}`} alt={sp.first_name} className="w-20 h-20 rounded-full object-cover mx-auto mb-3" />
+                    <img src={mediaUrl(sp.photo)} alt={sp.first_name} className="w-20 h-20 rounded-full object-cover mx-auto mb-3" />
                   ) : (
                     <div className="w-20 h-20 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 text-2xl font-bold mx-auto mb-3">
                       {sp.first_name[0]}
@@ -997,7 +1032,7 @@ function DefaultTheme({ event, onRegister, registering, registered, user, paymen
               {event.sponsors.map((sp) => (
                 <div key={sp.id} className="bg-white rounded-2xl border border-gray-100 px-6 py-3 shadow-sm flex items-center gap-3">
                   {sp.logo
-                    ? <img src={`${API_BASE}${sp.logo}`} alt={sp.name} className="h-10 object-contain" />
+                    ? <img src={mediaUrl(sp.logo)} alt={sp.name} className="h-10 object-contain" />
                     : <span className="font-bold text-gray-700">{sp.name}</span>
                   }
                 </div>
@@ -1087,22 +1122,30 @@ function CorporateTheme({ event, onRegister, registering, registered, user, paym
     <div className="min-h-screen bg-white text-gray-900">
       {/* Navbar */}
       <nav className="border-b border-gray-100 px-8 h-16 flex items-center justify-between sticky top-0 z-30 bg-white">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-4 h-4">
-              <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
+        <div className="flex items-center gap-4">
+          <Link to="/events" className="flex items-center gap-1 text-gray-400 hover:text-blue-600 text-sm transition-colors">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><polyline points="15 18 9 12 15 6"/></svg>
+            Events
+          </Link>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-4 h-4">
+                <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+            </div>
+            <span className="font-bold text-lg text-gray-900">Eventora</span>
           </div>
-          <span className="font-bold text-lg text-gray-900">Eventora</span>
         </div>
         <div className="hidden md:flex items-center gap-7 text-sm text-gray-500 font-medium">
           <a href="#about" className="hover:text-gray-900 transition-colors">About</a>
           <a href="#speakers" className="hover:text-gray-900 transition-colors">Speakers</a>
           <a href="#sponsors" className="hover:text-gray-900 transition-colors">Sponsors</a>
-          <a href="#register" className="bg-blue-600 text-white px-5 py-2 rounded-xl hover:bg-blue-700 transition-colors font-semibold">
-            Register Now
-          </a>
+          {user
+            ? <Link to={user.role === 'client' ? '/client' : user.role === 'organizer' ? '/organizer' : user.role === 'admin' ? '/admin' : '/my-tickets'} className="text-gray-500 hover:text-gray-900 transition-colors">Dashboard</Link>
+            : <Link to="/login" className="text-gray-500 hover:text-gray-900 transition-colors">Sign In</Link>
+          }
+          <a href="#register" className="bg-blue-600 text-white px-5 py-2 rounded-xl hover:bg-blue-700 transition-colors font-semibold">Register Now</a>
         </div>
       </nav>
 
@@ -1149,7 +1192,7 @@ function CorporateTheme({ event, onRegister, registering, registered, user, paym
       {/* Venue image */}
       {event.logo ? (
         <div className="max-w-3xl mx-auto px-8 mb-16">
-          <img src={`${API_BASE}${event.logo}`} alt={event.title} className="w-full rounded-2xl object-cover max-h-72 border border-gray-100 shadow-sm" />
+          <img src={mediaUrl(event.logo)} alt={event.title} className="w-full rounded-2xl object-cover max-h-72 border border-gray-100 shadow-sm" />
         </div>
       ) : (
         <div className="max-w-3xl mx-auto px-8 mb-16">
@@ -1215,7 +1258,7 @@ function CorporateTheme({ event, onRegister, registering, registered, user, paym
                 <div key={sp.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                   <div className="relative">
                     {sp.photo ? (
-                      <img src={`${API_BASE}${sp.photo}`} alt={sp.first_name} className="w-full h-52 object-cover object-top" />
+                      <img src={mediaUrl(sp.photo)} alt={sp.first_name} className="w-full h-52 object-cover object-top" />
                     ) : (
                       <div className="w-full h-52 bg-gradient-to-br from-slate-200 to-blue-100 flex items-center justify-center">
                         <span className="text-4xl font-bold text-blue-300">{sp.first_name[0]}</span>
@@ -1248,7 +1291,7 @@ function CorporateTheme({ event, onRegister, registering, registered, user, paym
               {event.sponsors.map((sp) => (
                 <div key={sp.id} className="flex items-center gap-2.5 border border-gray-200 rounded-2xl px-6 py-3 hover:border-blue-200 transition-colors">
                   {sp.logo
-                    ? <img src={`${API_BASE}${sp.logo}`} alt={sp.name} className="h-8 object-contain opacity-60 hover:opacity-100 transition-opacity" />
+                    ? <img src={mediaUrl(sp.logo)} alt={sp.name} className="h-8 object-contain opacity-60 hover:opacity-100 transition-opacity" />
                     : <span className="text-sm font-bold text-gray-500">{sp.name}</span>
                   }
                 </div>
@@ -1372,17 +1415,24 @@ function MinimalTheme({ event, onRegister, registering, registered, user, paymen
     <div className="min-h-screen bg-white text-gray-900 font-sans">
       {/* Navbar */}
       <nav className="border-b border-gray-200 px-8 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full" style={{ background: 'linear-gradient(135deg,#7C3AED,#00D4AA)' }} />
-          <span className="font-semibold text-sm tracking-wide text-gray-900">EVENTORA</span>
+        <div className="flex items-center gap-4">
+          <Link to="/events" className="flex items-center gap-1 text-gray-400 hover:text-gray-700 text-xs font-semibold tracking-wide uppercase transition-colors">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5"><polyline points="15 18 9 12 15 6"/></svg>
+            Events
+          </Link>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full" style={{ background: 'linear-gradient(135deg,#7C3AED,#00D4AA)' }} />
+            <span className="font-semibold text-sm tracking-wide text-gray-900">EVENTORA</span>
+          </div>
         </div>
         <div className="hidden md:flex items-center gap-7 text-xs font-semibold tracking-[0.12em] text-gray-400">
           <a href="#about" className="hover:text-gray-900 transition-colors uppercase">About</a>
           <a href="#speakers" className="hover:text-gray-900 transition-colors uppercase">Speakers</a>
-          <a href="#register" className="hover:text-gray-900 transition-colors uppercase">Register</a>
-          <a href="#register" className="border border-gray-900 text-gray-900 px-4 py-1.5 rounded text-xs uppercase tracking-widest hover:bg-gray-900 hover:text-white transition-colors">
-            Register Now
-          </a>
+          {user
+            ? <Link to={user.role === 'client' ? '/client' : user.role === 'organizer' ? '/organizer' : user.role === 'admin' ? '/admin' : '/my-tickets'} className="hover:text-gray-900 transition-colors uppercase">Dashboard</Link>
+            : <Link to="/login" className="hover:text-gray-900 transition-colors uppercase">Sign In</Link>
+          }
+          <a href="#register" className="border border-gray-900 text-gray-900 px-4 py-1.5 rounded text-xs uppercase tracking-widest hover:bg-gray-900 hover:text-white transition-colors">Register Now</a>
         </div>
       </nav>
 
@@ -1436,7 +1486,7 @@ function MinimalTheme({ event, onRegister, registering, registered, user, paymen
               {event.speakers.map((sp) => (
                 <div key={sp.id}>
                   {sp.photo ? (
-                    <img src={`${API_BASE}${sp.photo}`} alt={sp.first_name}
+                    <img src={mediaUrl(sp.photo)} alt={sp.first_name}
                       className="w-full aspect-square object-cover object-top rounded mb-3 filter grayscale" />
                   ) : (
                     <div className="w-full aspect-square bg-gray-100 rounded mb-3 flex items-center justify-center">
@@ -1461,7 +1511,7 @@ function MinimalTheme({ event, onRegister, registering, registered, user, paymen
               {event.sponsors.map((sp) => (
                 <div key={sp.id} className="flex items-center gap-2">
                   {sp.logo
-                    ? <img src={`${API_BASE}${sp.logo}`} alt={sp.name} className="h-6 object-contain filter grayscale opacity-40" />
+                    ? <img src={mediaUrl(sp.logo)} alt={sp.name} className="h-6 object-contain filter grayscale opacity-40" />
                     : <span className="text-sm font-bold text-gray-300">{sp.name}</span>
                   }
                 </div>
@@ -1563,22 +1613,30 @@ function VibrantTheme({ event, onRegister, registering, registered, user, paymen
       <div style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 40%, #06B6D4 100%)' }}>
         {/* Navbar */}
         <nav className="px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-4 h-4">
-                <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
+          <div className="flex items-center gap-4">
+            <Link to="/events" className="flex items-center gap-1 text-white/60 hover:text-white text-sm transition-colors">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><polyline points="15 18 9 12 15 6"/></svg>
+              Events
+            </Link>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-4 h-4">
+                  <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </div>
+              <span className="font-bold text-white text-base">Eventora</span>
             </div>
-            <span className="font-bold text-white text-base">Eventora</span>
           </div>
           <div className="hidden md:flex items-center gap-6 text-sm text-white/80 font-medium">
             <a href="#about" className="hover:text-white transition-colors">About</a>
             <a href="#speakers" className="hover:text-white transition-colors">Speakers</a>
             <a href="#sponsors" className="hover:text-white transition-colors">Sponsors</a>
-            <a href="#register" className="border border-white/50 text-white rounded-full px-5 py-2 hover:bg-white/10 transition-colors font-semibold">
-              Register now
-            </a>
+            {user
+              ? <Link to={user.role === 'client' ? '/client' : user.role === 'organizer' ? '/organizer' : user.role === 'admin' ? '/admin' : '/my-tickets'} className="text-white/80 hover:text-white transition-colors">Dashboard</Link>
+              : <Link to="/login" className="text-white/80 hover:text-white transition-colors">Sign In</Link>
+            }
+            <a href="#register" className="border border-white/50 text-white rounded-full px-5 py-2 hover:bg-white/10 transition-colors font-semibold">Register now</a>
           </div>
         </nav>
 
@@ -1642,7 +1700,7 @@ function VibrantTheme({ event, onRegister, registering, registered, user, paymen
             </div>
           </div>
           {event.logo ? (
-            <img src={`${API_BASE}${event.logo}`} alt={event.title}
+            <img src={mediaUrl(event.logo)} alt={event.title}
               className="w-full aspect-video object-cover rounded-2xl shadow-sm" />
           ) : (
             <div className="w-full aspect-video rounded-2xl bg-gradient-to-br from-violet-100 to-cyan-100 flex items-center justify-center">
@@ -1668,7 +1726,7 @@ function VibrantTheme({ event, onRegister, registering, registered, user, paymen
                   <div key={sp.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                     <div className="relative">
                       {sp.photo ? (
-                        <img src={`${API_BASE}${sp.photo}`} alt={sp.first_name} className="w-full h-52 object-cover object-top" />
+                        <img src={mediaUrl(sp.photo)} alt={sp.first_name} className="w-full h-52 object-cover object-top" />
                       ) : (
                         <div className="w-full h-52 bg-gradient-to-br from-violet-100 to-cyan-100 flex items-center justify-center">
                           <span className="text-4xl font-bold text-violet-400">{sp.first_name[0]}</span>
@@ -1710,7 +1768,7 @@ function VibrantTheme({ event, onRegister, registering, registered, user, paymen
               {event.sponsors.map((sp) => (
                 <div key={sp.id}>
                   {sp.logo
-                    ? <img src={`${API_BASE}${sp.logo}`} alt={sp.name} className="h-7 object-contain filter grayscale opacity-40 hover:opacity-70 transition-opacity" />
+                    ? <img src={mediaUrl(sp.logo)} alt={sp.name} className="h-7 object-contain filter grayscale opacity-40 hover:opacity-70 transition-opacity" />
                     : <span className="text-sm font-bold text-gray-300">{sp.name}</span>
                   }
                 </div>
