@@ -381,6 +381,8 @@ function MyEvents() {
 }
 
 // ── Speakers Page ────────────────────────────────────────────────────────────
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 function SpeakersPage() {
   const [events, setEvents] = useState([]);
   const [speakers, setSpeakers] = useState([]);
@@ -388,6 +390,7 @@ function SpeakersPage() {
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [photoFile, setPhotoFile] = useState(null);
   const { register, handleSubmit, reset } = useForm();
 
   useEffect(() => {
@@ -407,9 +410,16 @@ function SpeakersPage() {
   const onSubmit = async (data) => {
     setSaving(true);
     try {
-      const res = await api.post(`/api/events/${selectedEvent}/speakers/`, data);
+      const fd = new FormData();
+      fd.append('first_name', data.first_name);
+      fd.append('last_name', data.last_name);
+      fd.append('title', data.title);
+      if (data.bio) fd.append('bio', data.bio);
+      if (data.schedule_time) fd.append('schedule_time', data.schedule_time);
+      if (photoFile) fd.append('photo', photoFile);
+      const res = await api.post(`/api/events/${selectedEvent}/speakers/`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       setSpeakers((prev) => [...prev, res.data]);
-      reset(); setModalOpen(false);
+      reset(); setPhotoFile(null); setModalOpen(false);
       toast.success('Speaker added!');
     } catch { toast.error('Failed to add speaker'); }
     finally { setSaving(false); }
@@ -438,7 +448,10 @@ function SpeakersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {speakers.map((sp) => (
             <div key={sp.id} className="card flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg shrink-0">{sp.first_name[0]}</div>
+              {sp.photo
+                ? <img src={`${API_BASE}${sp.photo}`} alt={sp.first_name} className="w-12 h-12 rounded-full object-cover shrink-0" />
+                : <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg shrink-0">{sp.first_name[0]}</div>
+              }
               <div className="flex-1 min-w-0">
                 <p className="font-semibold">{sp.first_name} {sp.last_name}</p>
                 <p className="text-sm text-primary">{sp.title}</p>
@@ -449,7 +462,7 @@ function SpeakersPage() {
           ))}
         </div>
       )}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Speaker">
+      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setPhotoFile(null); reset(); }} title="Add Speaker">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div><label className="block text-sm font-medium mb-1.5">First name</label><input {...register('first_name', { required: true })} className="input" /></div>
@@ -458,6 +471,10 @@ function SpeakersPage() {
           <div><label className="block text-sm font-medium mb-1.5">Title / Role</label><input {...register('title', { required: true })} className="input" placeholder="AI Research Lead" /></div>
           <div><label className="block text-sm font-medium mb-1.5">Bio</label><textarea {...register('bio')} rows={2} className="input resize-none" /></div>
           <div><label className="block text-sm font-medium mb-1.5">Schedule time</label><input {...register('schedule_time')} type="datetime-local" className="input" /></div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Photo <span className="text-gray-400 font-normal">(optional)</span></label>
+            <input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files[0])} className="input" />
+          </div>
           <button type="submit" disabled={saving} className="btn-primary w-full">{saving ? 'Adding...' : 'Add Speaker'}</button>
         </form>
       </Modal>
@@ -473,6 +490,7 @@ function SponsorsPage() {
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
   const { register, handleSubmit, reset } = useForm();
 
   useEffect(() => {
@@ -491,8 +509,11 @@ function SponsorsPage() {
   const onSubmit = async (data) => {
     setSaving(true);
     try {
-      const res = await api.post(`/api/events/${selectedEvent}/sponsors/`, data);
-      setSponsors((prev) => [...prev, res.data]); reset(); setModalOpen(false);
+      const fd = new FormData();
+      fd.append('name', data.name);
+      if (logoFile) fd.append('logo', logoFile);
+      const res = await api.post(`/api/events/${selectedEvent}/sponsors/`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setSponsors((prev) => [...prev, res.data]); reset(); setLogoFile(null); setModalOpen(false);
       toast.success('Sponsor added!');
     } catch { toast.error('Failed'); } finally { setSaving(false); }
   };
@@ -512,15 +533,20 @@ function SponsorsPage() {
           <div className="flex flex-wrap gap-4">
             {sponsors.map((sp) => (
               <div key={sp.id} className="card flex items-center gap-3 py-3 px-5">
+                {sp.logo && <img src={`${API_BASE}${sp.logo}`} alt={sp.name} className="h-8 object-contain" />}
                 <span className="font-bold">{sp.name}</span>
                 <button onClick={async () => { await api.delete(`/api/sponsors/${sp.id}/`); setSponsors((p) => p.filter((s) => s.id !== sp.id)); toast.success('Removed'); }} className="text-danger text-sm">🗑️</button>
               </div>
             ))}
           </div>
         )}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Sponsor">
+      <Modal open={modalOpen} onClose={() => { setModalOpen(false); setLogoFile(null); reset(); }} title="Add Sponsor">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div><label className="block text-sm font-medium mb-1.5">Sponsor name</label><input {...register('name', { required: true })} className="input" placeholder="TechCorp" /></div>
+          <div>
+            <label className="block text-sm font-medium mb-1.5">Logo <span className="text-gray-400 font-normal">(optional)</span></label>
+            <input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files[0])} className="input" />
+          </div>
           <button type="submit" disabled={saving} className="btn-primary w-full">{saving ? 'Adding...' : 'Add Sponsor'}</button>
         </form>
       </Modal>
