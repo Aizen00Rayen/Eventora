@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import useAuthStore from '../store/authStore';
@@ -174,9 +174,9 @@ export default function NotFound() {
       {/* Footer */}
       <footer className="py-8 px-6 text-center">
         <div className="flex items-center justify-center gap-5 text-sm text-gray-400 mb-3">
-          <a href="#" className="hover:text-gray-700 transition-colors">Support</a>
-          <a href="#" className="hover:text-gray-700 transition-colors">Privacy</a>
-          <a href="#" className="hover:text-gray-700 transition-colors">Status</a>
+          <a href="/" className="hover:text-gray-700 transition-colors">Support</a>
+          <a href="/" className="hover:text-gray-700 transition-colors">Privacy</a>
+          <a href="/" className="hover:text-gray-700 transition-colors">Status</a>
         </div>
         <p className="text-xs text-gray-400">© {new Date().getFullYear()} Eventora Inc. All rights reserved.</p>
       </footer>

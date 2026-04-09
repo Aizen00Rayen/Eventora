@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import EventCard from '../../components/EventCard';
 import SkeletonCard from '../../components/SkeletonCard';
-import EmptyState from '../../components/EmptyState';
 import api from '../../utils/axios';
 
 const CATEGORY_FILTERS = [

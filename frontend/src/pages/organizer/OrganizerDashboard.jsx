@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -16,6 +17,7 @@ function QRScanModal({ open, onClose, onSuccess, onError }) {
     if (!open) { setResult(null); return; }
     startCamera();
     return () => { stopCamera(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const startCamera = async () => {
@@ -207,6 +209,7 @@ function ScanToast({ type, title, subtitle }) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function OrganizerDashboard() {
   const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
   const [orgInfo, setOrgInfo] = useState(null);
   const [scanOpen, setScanOpen] = useState(false);
   const [history, setHistory] = useState([]);
@@ -275,7 +278,7 @@ export default function OrganizerDashboard() {
             {user?.first_name} {user?.last_name}
           </div>
           <button
-            onClick={logout}
+            onClick={() => { logout(); navigate('/'); }}
             className="bg-primary text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-primary-dark transition-colors"
           >
             Logout
@@ -370,7 +373,7 @@ export default function OrganizerDashboard() {
                 </table>
                 {history.length > 5 && (
                   <div className="text-center mt-4">
-                    <button className="text-primary text-sm font-semibold hover:underline">View all activity</button>
+                    <p className="text-gray-400 text-sm">{history.length - 5} more validations today</p>
                   </div>
                 )}
               </>

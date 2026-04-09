@@ -1,15 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Routes, Route, useNavigate, NavLink } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell,
 } from 'recharts';
 import Modal from '../../components/Modal';
 import SkeletonCard from '../../components/SkeletonCard';
-import StatCard from '../../components/StatCard';
 import EmptyState from '../../components/EmptyState';
 import api from '../../utils/axios';
 import { formatDate } from '../../utils/formatters';

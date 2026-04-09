@@ -66,16 +66,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'eventora.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'eventora'),
-        'USER': os.environ.get('DB_USER', 'eventora'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'eventora_secret'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+_DB_ENGINE = os.environ.get('DB_ENGINE', 'sqlite')
+
+if _DB_ENGINE == 'postgresql':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME', 'eventora'),
+            'USER': os.environ.get('DB_USER', 'eventora'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', 'eventora_secret'),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -131,7 +141,12 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
 CORS_ALLOW_CREDENTIALS = True
 
 # ── Email ─────────────────────────────────────────────────────
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+_EMAIL_MODE = os.environ.get('EMAIL_MODE', 'console')
+EMAIL_BACKEND = (
+    'django.core.mail.backends.smtp.EmailBackend'
+    if _EMAIL_MODE == 'smtp'
+    else 'django.core.mail.backends.console.EmailBackend'
+)
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'

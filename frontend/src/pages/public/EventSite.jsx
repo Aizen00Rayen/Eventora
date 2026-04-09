@@ -1402,10 +1402,10 @@ function CorporateTheme({ event, onRegister, registering, registered, user, paym
           <span className="font-bold text-sm text-gray-700">Eventora</span>
         </div>
         <div className="flex items-center gap-5 text-sm text-gray-400">
-          <a href="#" className="hover:text-gray-600 transition-colors">Privacy</a>
-          <a href="#" className="hover:text-gray-600 transition-colors">Terms</a>
-          <a href="#" className="hover:text-gray-600 transition-colors">Contact</a>
-          <a href="#" className="hover:text-gray-600 transition-colors">Press</a>
+          <a href="/" className="hover:text-gray-600 transition-colors">Privacy</a>
+          <a href="/" className="hover:text-gray-600 transition-colors">Terms</a>
+          <a href="/" className="hover:text-gray-600 transition-colors">Contact</a>
+          <a href="/" className="hover:text-gray-600 transition-colors">Press</a>
         </div>
         <p className="text-xs text-gray-400">© {new Date().getFullYear()} Eventora Corp. All rights reserved.</p>
       </footer>
@@ -1600,9 +1600,9 @@ function MinimalTheme({ event, onRegister, registering, registered, user, paymen
       <footer style={{ backgroundColor: '#0F172A' }} className="border-t border-slate-800 px-8 py-5 flex items-center justify-between flex-wrap gap-4">
         <p className="text-xs text-slate-500">© {new Date().getFullYear()} Eventora. All rights reserved.</p>
         <div className="flex gap-5 text-xs text-slate-500">
-          <a href="#" className="hover:text-white transition-colors">Privacy</a>
-          <a href="#" className="hover:text-white transition-colors">Terms</a>
-          <a href="#" className="hover:text-white transition-colors">Twitter</a>
+          <a href="/" className="hover:text-white transition-colors">Privacy</a>
+          <a href="/" className="hover:text-white transition-colors">Terms</a>
+          <a href="/" className="hover:text-white transition-colors">Twitter</a>
         </div>
       </footer>
     </div>
@@ -1870,9 +1870,9 @@ function VibrantTheme({ event, onRegister, registering, registered, user, paymen
           <span className="font-bold text-sm text-white">Eventora</span>
         </div>
         <div className="flex gap-5 text-xs text-gray-400">
-          <a href="#" className="hover:text-white transition-colors">Privacy</a>
-          <a href="#" className="hover:text-white transition-colors">Terms</a>
-          <a href="#" className="hover:text-white transition-colors">Support</a>
+          <a href="/" className="hover:text-white transition-colors">Privacy</a>
+          <a href="/" className="hover:text-white transition-colors">Terms</a>
+          <a href="/" className="hover:text-white transition-colors">Support</a>
         </div>
         <p className="text-xs text-gray-500">© {new Date().getFullYear()} Eventora Labs. All rights reserved.</p>
       </footer>

@@ -81,7 +81,7 @@ export default function Register() {
   const [selectedRole, setSelectedRole] = useState('admin');
   const [pwValue, setPwValue] = useState('');
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { role: 'admin' },
   });
@@ -235,9 +235,9 @@ export default function Register() {
               />
               <label htmlFor="terms" className="text-sm text-gray-600 cursor-pointer leading-snug">
                 I agree to the{' '}
-                <a href="#" className="text-primary hover:underline font-medium">Terms of Service</a>
+                <a href="/" className="text-primary hover:underline font-medium">Terms of Service</a>
                 {' '}and{' '}
-                <a href="#" className="text-primary hover:underline font-medium">Privacy Policy</a>.
+                <a href="/" className="text-primary hover:underline font-medium">Privacy Policy</a>.
               </label>
             </div>
             {errors.terms && <p className="text-danger text-xs -mt-2">{errors.terms.message}</p>}

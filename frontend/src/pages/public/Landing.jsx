@@ -346,12 +346,12 @@ export default function Landing() {
               The all-in-one platform for professional event organizers to manage, scale, and inspire.
             </p>
             <div className="flex gap-3">
-              <a href="#" className="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center hover:bg-primary transition-colors">
+              <a href="/" className="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center hover:bg-primary transition-colors">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-white">
                   <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z" />
                 </svg>
               </a>
-              <a href="#" className="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center hover:bg-primary transition-colors">
+              <a href="/" className="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center hover:bg-primary transition-colors">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-white">
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
                   <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
@@ -365,7 +365,7 @@ export default function Landing() {
             <h4 className="text-white font-semibold mb-4">Product</h4>
             <ul className="space-y-3 text-sm">
               {['Features', 'Event Management', 'Ticketing', 'Integrations'].map(l => (
-                <li key={l}><a href="#" className="hover:text-white transition-colors">{l}</a></li>
+                <li key={l}><a href="/" className="hover:text-white transition-colors">{l}</a></li>
               ))}
             </ul>
           </div>
@@ -374,7 +374,7 @@ export default function Landing() {
             <h4 className="text-white font-semibold mb-4">Company</h4>
             <ul className="space-y-3 text-sm">
               {['About Us', 'Blog', 'Careers', 'Contact'].map(l => (
-                <li key={l}><a href="#" className="hover:text-white transition-colors">{l}</a></li>
+                <li key={l}><a href="/" className="hover:text-white transition-colors">{l}</a></li>
               ))}
             </ul>
           </div>
@@ -383,7 +383,7 @@ export default function Landing() {
             <h4 className="text-white font-semibold mb-4">Legal</h4>
             <ul className="space-y-3 text-sm">
               {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map(l => (
-                <li key={l}><a href="#" className="hover:text-white transition-colors">{l}</a></li>
+                <li key={l}><a href="/" className="hover:text-white transition-colors">{l}</a></li>
               ))}
             </ul>
           </div>
