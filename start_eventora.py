@@ -112,13 +112,35 @@ subprocess.run(
 )
 
 # ── 5. Frontend dependencies ───────────────────────────────────────────────────
+import json as _json
+import hashlib as _hashlib
+
 banner("Checking frontend dependencies...")
-if not (FRONTEND / "node_modules").exists():
-    banner("Installing npm packages (first run — may take a minute)...")
-    subprocess.run([NPM, "install", "--legacy-peer-deps", "--silent"], cwd=FRONTEND, check=True)
+
+_pkg_json = FRONTEND / "package.json"
+_stamp_file = FRONTEND / "node_modules" / ".install_stamp"
+
+def _pkg_hash():
+    return _hashlib.md5(_pkg_json.read_bytes()).hexdigest()
+
+_needs_install = not (FRONTEND / "node_modules").exists()
+if not _needs_install and _stamp_file.exists():
+    _needs_install = _stamp_file.read_text().strip() != _pkg_hash()
+elif not _needs_install:
+    _needs_install = True  # node_modules exists but no stamp yet — reinstall once to apply overrides
+
+if _needs_install:
+    banner("Installing npm packages (may take a minute on first run)...")
+    result = subprocess.run(
+        [NPM, "install", "--legacy-peer-deps", "--silent"],
+        cwd=FRONTEND,
+    )
+    if result.returncode != 0:
+        die("npm install failed. Check the output above.")
+    _stamp_file.write_text(_pkg_hash())
     ok("npm packages installed")
 else:
-    ok("node_modules found, skipping install")
+    ok("node_modules up to date, skipping npm install")
 
 fe_env_file = FRONTEND / ".env"
 if not fe_env_file.exists():
