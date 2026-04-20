@@ -144,7 +144,11 @@ else:
 
 fe_env_file = FRONTEND / ".env"
 if not fe_env_file.exists():
-    fe_env_file.write_text("REACT_APP_API_URL=http://localhost:8000\n")
+    fe_env_file.write_text(
+        "REACT_APP_API_URL=http://localhost:8000\n"
+        "SKIP_PREFLIGHT_CHECK=true\n"
+        "GENERATE_SOURCEMAP=false\n"
+    )
     ok("Created frontend .env")
 
 # ── 6. Launch servers ──────────────────────────────────────────────────────────
@@ -184,6 +188,9 @@ frontend_helper.write_text(
     "title Eventora Frontend\r\n"
     f"cd /d \"{FRONTEND}\"\r\n"
     "set BROWSER=none\r\n"
+    "set SKIP_PREFLIGHT_CHECK=true\r\n"
+    "set GENERATE_SOURCEMAP=false\r\n"
+    "set NODE_OPTIONS=--openssl-legacy-provider\r\n"
     "echo [Frontend] React running at http://localhost:3000\r\n"
     "npm start\r\n"
     "pause\r\n",
