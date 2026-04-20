@@ -25,9 +25,10 @@ export default function EventsList() {
   }, []);
 
   const filtered = events.filter((e) => {
+    const q = search.toLowerCase();
     const matchesSearch =
-      e.title.toLowerCase().includes(search.toLowerCase()) ||
-      e.location.toLowerCase().includes(search.toLowerCase());
+      (e.title || '').toLowerCase().includes(q) ||
+      (e.location || '').toLowerCase().includes(q);
 
     const matchesCategory =
       category === 'all' ||

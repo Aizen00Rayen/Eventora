@@ -106,7 +106,7 @@ function ParticipantNavbar() {
 
 // ── Ticket Card ───────────────────────────────────────────────────────────────
 function TicketCard({ reg }) {
-  const ticketId = `TKT-${new Date(reg.created_at || Date.now()).getFullYear()}-${String(reg.id).padStart(4, '0')}`;
+  const ticketId = `TKT-${new Date(reg.registered_at || Date.now()).getFullYear()}-${String(reg.id).padStart(4, '0')}`;
 
   return (
     <motion.div

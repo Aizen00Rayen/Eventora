@@ -13,7 +13,7 @@ const schema = z.object({
   email:        z.string().email('Valid email required'),
   password:     z.string().min(8, 'At least 8 characters'),
   password2:    z.string(),
-  role:         z.enum(['admin', 'client', 'organizer', 'participant']),
+  role:         z.enum(['client', 'organizer', 'participant']),
   terms:        z.literal(true, { errorMap: () => ({ message: 'You must accept the terms' }) }),
 }).refine((d) => d.password === d.password2, {
   message: 'Passwords do not match',
@@ -21,15 +21,6 @@ const schema = z.object({
 });
 
 const ROLES = [
-  {
-    value: 'admin',
-    label: 'Admin',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      </svg>
-    ),
-  },
   {
     value: 'client',
     label: 'Client',
@@ -78,12 +69,12 @@ export default function Register() {
   const { register: registerUser } = useAuthStore();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('admin');
+  const [selectedRole, setSelectedRole] = useState('client');
   const [pwValue, setPwValue] = useState('');
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { role: 'admin' },
+    defaultValues: { role: 'client' },
   });
 
   const strength = getPasswordStrength(pwValue);
@@ -94,7 +85,7 @@ export default function Register() {
       // Generate username from email prefix
       const username = data.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_') + '_' + Math.floor(Math.random() * 1000);
       await registerUser({ ...data, username });
-      toast.success('Account created! Please sign in.');
+      toast.success('Account created! Pending admin approval — you will be able to sign in once activated.', { duration: 6000 });
       navigate('/login');
     } catch (err) {
       const errs = err.response?.data;

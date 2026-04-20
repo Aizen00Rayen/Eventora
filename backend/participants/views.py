@@ -88,6 +88,14 @@ class MyRegistrationsView(generics.ListAPIView):
         return Registration.objects.filter(participant=self.request.user).select_related('event')
 
 
+class MyRegistrationDetailView(generics.RetrieveAPIView):
+    serializer_class = RegistrationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Registration.objects.filter(participant=self.request.user).select_related('event')
+
+
 class ValidateRegistrationView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -108,6 +116,27 @@ class ValidateByTokenView(APIView):
         if not token:
             return Response({'detail': 'Token required.'}, status=status.HTTP_400_BAD_REQUEST)
         reg = get_object_or_404(Registration, token=token)
+
+        # Only admins, the event owner, or an organizer assigned to this event
+        # can check in participants.
+        user = request.user
+        allowed = False
+        if user.role == 'admin':
+            allowed = True
+        elif user.role == 'client' and reg.event.client_id == user.id:
+            allowed = True
+        elif user.role == 'organizer':
+            from organizers.models import Organizer
+            allowed = Organizer.objects.filter(event=reg.event, user=user).exists()
+
+        if not allowed:
+            return Response({'detail': 'Forbidden.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if reg.payment_status != 'approved':
+            return Response(
+                {'detail': 'Payment not approved yet. Participant cannot be checked in.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         if reg.is_present:
             return Response({'detail': 'Already checked in.'}, status=status.HTTP_400_BAD_REQUEST)
         reg.is_present = True

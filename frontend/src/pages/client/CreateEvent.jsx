@@ -89,6 +89,10 @@ export default function CreateEvent() {
       formData.append('location', form.location);
       formData.append('max_capacity', form.max_capacity);
       formData.append('theme', form.theme);
+      formData.append('ticket_type', form.ticket_type);
+      if (form.ticket_type === 'paid') {
+        formData.append('price', form.price || '0');
+      }
       if (logoFile) formData.append('logo', logoFile);
 
       await api.post('/api/events/', formData, { headers: { 'Content-Type': 'multipart/form-data' } });

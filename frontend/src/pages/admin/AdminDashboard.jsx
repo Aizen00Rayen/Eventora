@@ -753,21 +753,23 @@ function AdminUsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all'); // all | pending | active
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
   const PER_PAGE = 10;
 
   const fetchUsers = () => {
     setLoading(true);
     const params = new URLSearchParams({ page });
     if (search) params.set('search', search);
+    if (statusFilter !== 'all') params.set('status', statusFilter);
     api.get(`/api/admin/users/?${params}`)
       .then(({ data }) => {
         setUsers(data.results || data);
         setTotal(data.count || (data.results || data).length);
       })
       .catch(() => {
-        // Fallback: try /api/users/
         api.get('/api/users/')
           .then(({ data }) => {
             setUsers(data.results || data);
@@ -778,8 +780,17 @@ function AdminUsersPage() {
       .finally(() => setLoading(false));
   };
 
+  const fetchPendingCount = () => {
+    api.get('/api/admin/users/pending/')
+      .then(({ data }) => {
+        const list = data.results || data;
+        setPendingCount(data.count || list.length || 0);
+      })
+      .catch(() => {});
+  };
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchUsers(); }, [page]);
+  useEffect(() => { fetchUsers(); fetchPendingCount(); }, [page, statusFilter]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -791,7 +802,37 @@ function AdminUsersPage() {
     try {
       await api.patch(`/api/admin/users/${user.id}/`, { is_active: !user.is_active });
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, is_active: !u.is_active } : u));
+      fetchPendingCount();
     } catch { toast.error('Failed to update user'); }
+  };
+
+  const approveUser = async (user) => {
+    try {
+      await api.post(`/api/admin/users/${user.id}/approve/`);
+      toast.success(`${user.first_name || user.email} approved`);
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, is_active: true } : u));
+      fetchPendingCount();
+    } catch { toast.error('Failed to approve user'); }
+  };
+
+  const deleteUser = async (user) => {
+    if (!window.confirm(`Delete user ${user.email}? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/api/admin/users/${user.id}/`);
+      toast.success('User deleted');
+      setUsers(prev => prev.filter(u => u.id !== user.id));
+      fetchPendingCount();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to delete user');
+    }
+  };
+
+  const changeRole = async (user, newRole) => {
+    try {
+      await api.patch(`/api/admin/users/${user.id}/`, { role: newRole });
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: newRole } : u));
+      toast.success('Role updated');
+    } catch { toast.error('Failed to change role'); }
   };
 
   const formatRegistration = (dateStr) => {
@@ -799,13 +840,18 @@ function AdminUsersPage() {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
   };
 
+  const TABS = [
+    { key: 'all', label: 'All Users' },
+    { key: 'pending', label: `Pending Approval${pendingCount ? ` (${pendingCount})` : ''}` },
+    { key: 'active', label: 'Active' },
+  ];
+
   return (
     <div className="flex-1 p-8 overflow-y-auto">
-      {/* Top bar */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-extrabold text-gray-900">Users</h1>
-          <span className="text-primary font-semibold text-base">{total.toLocaleString()} total users</span>
+          <span className="text-primary font-semibold text-base">{total.toLocaleString()} total</span>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -817,10 +863,24 @@ function AdminUsersPage() {
               className="bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>
-          <button className="flex items-center gap-2 bg-primary text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-primary-dark transition-colors">
-            <Ico.UserPlus /> Add User
-          </button>
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 mb-4 border-b border-gray-200">
+        {TABS.map(t => (
+          <button
+            key={t.key}
+            onClick={() => { setPage(1); setStatusFilter(t.key); }}
+            className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+              statusFilter === t.key
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {/* Table */}
@@ -858,16 +918,40 @@ function AdminUsersPage() {
                     </div>
                   </td>
                   <td className="px-5 py-4 font-semibold text-gray-900 text-sm">{u.first_name} {u.last_name}</td>
-                  <td className="px-5 py-4"><RoleBadge role={u.role} /></td>
+                  <td className="px-5 py-4">
+                    <select
+                      value={u.role}
+                      onChange={(e) => changeRole(u, e.target.value)}
+                      className="bg-transparent border border-gray-200 rounded-lg text-xs px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="client">Client</option>
+                      <option value="organizer">Organizer</option>
+                      <option value="participant">Participant</option>
+                    </select>
+                  </td>
                   <td className="px-5 py-4 text-gray-500 text-sm">{u.email}</td>
                   <td className="px-5 py-4 text-gray-500 text-sm whitespace-nowrap">{formatRegistration(u.date_joined)}</td>
                   <td className="px-5 py-4">
                     <Toggle checked={u.is_active} onChange={() => toggleActive(u)} />
                   </td>
                   <td className="px-5 py-4">
-                    <button className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-colors">
-                      <Ico.MoreVert />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {!u.is_active && (
+                        <button
+                          onClick={() => approveUser(u)}
+                          className="px-3 py-1 text-xs font-semibold rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                        >
+                          Approve
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteUser(u)}
+                        className="px-3 py-1 text-xs font-semibold rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

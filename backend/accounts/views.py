@@ -32,13 +32,25 @@ class MeView(APIView):
 
 
 class AdminUsersView(generics.ListAPIView):
-    """Admin: list all users with optional search."""
+    """Admin: list all users with optional search and status filter."""
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
 
     def get_queryset(self):
         qs = User.objects.all().order_by('-date_joined')
-        search = self.request.query_params.get('search', '')
+        params = self.request.query_params
+
+        status_filter = params.get('status', '')
+        if status_filter == 'pending':
+            qs = qs.filter(is_active=False)
+        elif status_filter == 'active':
+            qs = qs.filter(is_active=True)
+
+        role_filter = params.get('role', '')
+        if role_filter:
+            qs = qs.filter(role=role_filter)
+
+        search = params.get('search', '')
         if search:
             from django.db.models import Q
             qs = qs.filter(
@@ -52,13 +64,61 @@ class AdminUsersView(generics.ListAPIView):
 
 
 class AdminUserDetailView(APIView):
-    """Admin: activate/deactivate a user."""
+    """Admin: update (activate, change role) or delete a user."""
     permission_classes = [IsAdminUser]
+
+    ALLOWED_ROLES = {'admin', 'client', 'organizer', 'participant'}
 
     def patch(self, request, pk):
         user = get_object_or_404(User, pk=pk)
-        is_active = request.data.get('is_active')
-        if is_active is not None:
-            user.is_active = bool(is_active)
-            user.save(update_fields=['is_active'])
+        updated_fields = []
+
+        if 'is_active' in request.data:
+            user.is_active = bool(request.data.get('is_active'))
+            updated_fields.append('is_active')
+
+        if 'role' in request.data:
+            role = request.data.get('role')
+            if role not in self.ALLOWED_ROLES:
+                return Response({'role': 'Invalid role.'}, status=status.HTTP_400_BAD_REQUEST)
+            user.role = role
+            updated_fields.append('role')
+
+        for field in ('first_name', 'last_name', 'email', 'phone'):
+            if field in request.data:
+                setattr(user, field, request.data.get(field) or '')
+                updated_fields.append(field)
+
+        if updated_fields:
+            user.save(update_fields=updated_fields)
+        return Response(UserSerializer(user).data)
+
+    def delete(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        if user.pk == request.user.pk:
+            return Response(
+                {'detail': "You can't delete your own account."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminPendingUsersView(generics.ListAPIView):
+    """Admin: list accounts awaiting approval (is_active=False)."""
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return User.objects.filter(is_active=False).order_by('-date_joined')
+
+
+class AdminApproveUserView(APIView):
+    """Admin: approve a pending user in one action."""
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        user.is_active = True
+        user.save(update_fields=['is_active'])
         return Response(UserSerializer(user).data)
