@@ -55,7 +55,20 @@ if not ACTIVATE.exists():
     ok("Created virtualenv")
 
 subprocess.run([str(PYTHON), "-m", "pip", "install", "-q", "--upgrade", "pip"], check=True)
-subprocess.run([str(PYTHON), "-m", "pip", "install", "-q", "-r", str(BACKEND / "requirements.txt")], check=True)
+
+result = subprocess.run(
+    [str(PYTHON), "-m", "pip", "install", "-q",
+     "--only-binary", ":all:",
+     "-r", str(BACKEND / "requirements.txt")],
+)
+if result.returncode != 0:
+    die(
+        "A Python dependency failed to install.\n"
+        "This usually means a package has no pre-built wheel for your Python version.\n"
+        "Try:\n"
+        "  1. Update Python to 3.11 or 3.12 from https://python.org\n"
+        "  2. Or delete backend\\.venv and run start.bat again."
+    )
 ok("Python dependencies installed")
 
 # ── 3. .env file ───────────────────────────────────────────────────────────────
