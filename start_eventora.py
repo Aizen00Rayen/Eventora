@@ -25,6 +25,9 @@ PYTHON = VENV / "Scripts" / "python.exe"
 # can call it without shell=True.
 NPM = shutil.which("npm") or "npm"
 
+PY_MIN = (3, 10)
+PY_MAX = (3, 15)   # exclusive upper bound; update when Django adds support
+
 
 def banner(msg):
     print(f"\n[Eventora] {msg}")
@@ -44,44 +47,73 @@ def die(msg):
     sys.exit(1)
 
 
-# ── 1. Check prerequisites ─────────────────────────────────────────────────────
+# ── 1. Check prerequisites ──────────────────────────────────────────────────
+py_ver = sys.version_info[:2]
+if py_ver < PY_MIN:
+    die(
+        f"Python {py_ver[0]}.{py_ver[1]} is too old.\n"
+        f"Eventora requires Python 3.10 or newer.\n"
+        f"Download: https://python.org/downloads/"
+    )
+if py_ver >= PY_MAX:
+    warn(
+        f"Python {py_ver[0]}.{py_ver[1]} is very new and may not yet have\n"
+        f"     pre-built wheels for all dependencies. Installation will attempt\n"
+        f"     to build from source where needed (this is normal)."
+    )
+
 if not shutil.which("python"):
-    die("Python not found. Install Python 3.10+ from https://python.org (tick 'Add to PATH')")
+    die("Python not found on PATH. Install Python 3.10+ from https://python.org (tick 'Add to PATH')")
 
 if not shutil.which("npm"):
     die("Node.js / npm not found. Install Node.js 18+ from https://nodejs.org and restart this window.")
 
-# ── 2. Virtual environment ─────────────────────────────────────────────────────
+# ── 2. Virtual environment ───────────────────────────────────────────────────
 banner("Setting up Python virtual environment...")
 if not ACTIVATE.exists():
     subprocess.run([sys.executable, "-m", "venv", str(VENV)], check=True)
     ok("Created virtualenv")
 
-subprocess.run([str(PYTHON), "-m", "pip", "install", "-q", "--upgrade", "pip"], check=True)
+subprocess.run(
+    [str(PYTHON), "-m", "pip", "install", "-q", "--upgrade", "pip"],
+    check=True,
+)
 
+# --prefer-binary: use wheels when available, fall back to source builds
+# (unlike --only-binary :all: which fails if no wheel exists for your Python version)
+banner("Installing Python dependencies...")
 result = subprocess.run(
-    [str(PYTHON), "-m", "pip", "install", "-q",
-     "--only-binary", ":all:",
+    [str(PYTHON), "-m", "pip", "install", "-q", "--prefer-binary",
      "-r", str(BACKEND / "requirements.txt")],
 )
 if result.returncode != 0:
-    die(
-        "A Python dependency failed to install.\n"
-        "This usually means a package has no pre-built wheel for your Python version.\n"
-        "Try:\n"
-        "  1. Update Python to 3.11 or 3.12 from https://python.org\n"
-        "  2. Or delete backend\\.venv and run start.bat again."
+    # Retry without binary preference — lets pip build from source
+    warn("Wheel install failed; retrying with source builds allowed...")
+    result = subprocess.run(
+        [str(PYTHON), "-m", "pip", "install", "-q",
+         "-r", str(BACKEND / "requirements.txt")],
     )
+    if result.returncode != 0:
+        die(
+            "A Python dependency failed to install.\n\n"
+            "Common fixes:\n"
+            "  1. Make sure Microsoft C++ Build Tools are installed:\n"
+            "     https://visualstudio.microsoft.com/visual-cpp-build-tools/\n"
+            "     (needed to compile packages that have no wheel for your Python version)\n"
+            "  2. Delete backend\\.venv and run start.bat again.\n"
+            "  3. Try Python 3.11, 3.12, or 3.13 where more wheels are available:\n"
+            "     https://python.org/downloads/"
+        )
 ok("Python dependencies installed")
 
-# ── 3. .env file ───────────────────────────────────────────────────────────────
+# ── 3. .env file ────────────────────────────────────────────────────────────
 env_file = ROOT / ".env"
 env_example = ROOT / ".env.example"
 if not env_file.exists() and env_example.exists():
     shutil.copy(env_example, env_file)
     warn("Created .env from .env.example")
 
-# ── 4. Database ────────────────────────────────────────────────────────────────
+# ── 4. Database ──────────────────────────────────────────────────────────────
 db_file = BACKEND / "db.sqlite3"
 if RESET and db_file.exists():
     db_file.unlink()
@@ -99,7 +131,7 @@ env = {
 banner("Running migrations...")
 result = subprocess.run(
     [str(PYTHON), "manage.py", "migrate", "--run-syncdb", "-v", "0"],
-    cwd=BACKEND, env=env
+    cwd=BACKEND, env=env,
 )
 if result.returncode != 0:
     die("Migrations failed. Check the output above.")
@@ -108,11 +140,10 @@ ok("Migrations complete")
 banner("Seeding sample data...")
 subprocess.run(
     [str(PYTHON), "manage.py", "seed_data", "-v", "0"],
-    cwd=BACKEND, env=env
+    cwd=BACKEND, env=env,
 )
 
-# ── 5. Frontend dependencies ───────────────────────────────────────────────────
-import json as _json
+# ── 5. Frontend dependencies ─────────────────────────────────────────────────
 import hashlib as _hashlib
 
 banner("Checking frontend dependencies...")
@@ -120,14 +151,16 @@ banner("Checking frontend dependencies...")
 _pkg_json = FRONTEND / "package.json"
 _stamp_file = FRONTEND / "node_modules" / ".install_stamp"
 
+
 def _pkg_hash():
     return _hashlib.md5(_pkg_json.read_bytes()).hexdigest()
+
 
 _needs_install = not (FRONTEND / "node_modules").exists()
 if not _needs_install and _stamp_file.exists():
     _needs_install = _stamp_file.read_text().strip() != _pkg_hash()
 elif not _needs_install:
-    _needs_install = True  # node_modules exists but no stamp yet — reinstall once to apply overrides
+    _needs_install = True  # stamp missing — reinstall once to be safe
 
 if _needs_install:
     banner("Installing npm packages (may take a minute on first run)...")
@@ -147,7 +180,7 @@ if not fe_env_file.exists():
     fe_env_file.write_text("VITE_API_URL=http://localhost:8000\n")
     ok("Created frontend .env")
 
-# ── 6. Launch servers ──────────────────────────────────────────────────────────
+# ── 6. Launch servers ────────────────────────────────────────────────────────
 print()
 print("=" * 60)
 print("  Eventora is starting!")
@@ -158,7 +191,6 @@ print()
 print("  Two windows will open. Close them to stop the servers.")
 print()
 
-# Write helper scripts to TEMP to avoid CMD quoting issues
 temp = Path(os.environ.get("TEMP", os.environ.get("TMP", "C:\\Temp")))
 
 backend_helper = temp / "eventora_backend.bat"
@@ -175,7 +207,7 @@ backend_helper.write_text(
     "echo [Backend] Django running at http://localhost:8000\r\n"
     "python manage.py runserver 127.0.0.1:8000\r\n"
     "pause\r\n",
-    encoding="ascii"
+    encoding="ascii",
 )
 
 frontend_helper = temp / "eventora_frontend.bat"
@@ -186,7 +218,7 @@ frontend_helper.write_text(
     "echo [Frontend] Vite dev server starting at http://localhost:3000\r\n"
     "npm start\r\n"
     "pause\r\n",
-    encoding="ascii"
+    encoding="ascii",
 )
 
 subprocess.Popen(["cmd", "/c", "start", "Eventora Backend", str(backend_helper)], shell=False)
