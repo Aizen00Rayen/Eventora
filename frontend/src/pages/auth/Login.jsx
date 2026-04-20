@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 
 const schema = z.object({
-  username: z.string().min(1, 'Username is required'),
+  username: z.string().min(1, 'Email is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -63,8 +63,8 @@ export default function Login() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium mb-1.5">Username</label>
-              <input {...register('username')} className="input" placeholder="your_username" />
+              <label className="block text-sm font-medium mb-1.5">Email address</label>
+              <input {...register('username')} type="email" className="input" placeholder="you@example.com" autoComplete="email" />
               {errors.username && <p className="text-danger text-sm mt-1">{errors.username.message}</p>}
             </div>
             <div>
@@ -86,10 +86,10 @@ export default function Login() {
           <div className="mt-8 p-4 bg-primary/5 rounded-card text-sm">
             <p className="font-semibold text-primary mb-2">Demo accounts</p>
             <div className="space-y-1 text-gray-600 dark:text-gray-400">
-              <p>Admin: <code>admin</code> / <code>admin123</code></p>
-              <p>Client: <code>client1</code> / <code>client123</code></p>
-              <p>Organizer: <code>organizer1</code> / <code>organizer123</code></p>
-              <p>Participant: <code>participant1</code> / <code>participant123</code></p>
+              <p>Admin: <code>admin@eventora.com</code> / <code>admin123</code></p>
+              <p>Client: <code>client@eventora.com</code> / <code>client123</code></p>
+              <p>Organizer: <code>organizer@eventora.com</code> / <code>organizer123</code></p>
+              <p>Participant: <code>participant@eventora.com</code> / <code>participant123</code></p>
             </div>
           </div>
         </motion.div>

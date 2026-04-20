@@ -53,19 +53,23 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-        # Django's authenticate() treats inactive users as failed logins and
-        # returns a generic "No active account" message. Detect that case and
-        # return a clearer error so the frontend can show the real reason.
+        # Allow login with email: look up the username from the email and swap it
+        # in so Django's authenticate() finds the account normally.
+        login_value = attrs.get(self.username_field, '')
+        if login_value and '@' in login_value:
+            user_by_email = User.objects.filter(email__iexact=login_value).first()
+            if user_by_email:
+                attrs[self.username_field] = user_by_email.username
+
         try:
             data = super().validate(attrs)
         except exceptions.AuthenticationFailed:
-            username_field = self.username_field
-            lookup_value = attrs.get(username_field)
-            user = None
-            if lookup_value:
-                user = User.objects.filter(**{username_field: lookup_value}).first()
-                if user is None and username_field != 'email':
-                    user = User.objects.filter(email__iexact=lookup_value).first()
+            # Give a clearer message if the account exists but is inactive.
+            lookup = attrs.get(self.username_field, '')
+            user = (
+                User.objects.filter(username=lookup).first()
+                or User.objects.filter(email__iexact=login_value).first()
+            )
             if user and not user.is_active and user.check_password(attrs.get('password', '')):
                 raise exceptions.AuthenticationFailed(
                     'Your account is pending administrator approval.',
