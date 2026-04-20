@@ -54,8 +54,8 @@ if not ACTIVATE.exists():
     subprocess.run([sys.executable, "-m", "venv", str(VENV)], check=True)
     ok("Created virtualenv")
 
-subprocess.run([str(PIP), "install", "-q", "--upgrade", "pip"], check=True)
-subprocess.run([str(PIP), "install", "-q", "-r", str(BACKEND / "requirements.txt")], check=True)
+subprocess.run([str(PYTHON), "-m", "pip", "install", "-q", "--upgrade", "pip"], check=True)
+subprocess.run([str(PYTHON), "-m", "pip", "install", "-q", "-r", str(BACKEND / "requirements.txt")], check=True)
 ok("Python dependencies installed")
 
 # ── 3. .env file ───────────────────────────────────────────────────────────────
