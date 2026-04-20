@@ -390,7 +390,7 @@ function MyEvents() {
 }
 
 // ── Speakers Page ────────────────────────────────────────────────────────────
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const mediaUrl = (p) => { if (!p) return ''; return p.startsWith('http') ? p : `${API_BASE}${p}`; };
 
 function SpeakersPage() {
