@@ -77,8 +77,8 @@ export default function CreateEvent() {
   };
 
   const handleSubmit = async () => {
-    if (!form.title || !form.start_date || !form.location || !form.max_capacity) {
-      toast.error('Please fill in all required fields');
+    if (!form.title || !form.description || !form.start_date || !form.location || !form.max_capacity) {
+      toast.error('Please fill in all required fields (title, description, date, location, capacity)');
       return;
     }
     setSubmitting(true);
@@ -97,11 +97,18 @@ export default function CreateEvent() {
       }
       if (logoFile) formData.append('logo', logoFile);
 
-      await api.post('/api/events/', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      // Do NOT set Content-Type manually — axios sets multipart/form-data with boundary automatically
+      await api.post('/api/events/', formData, { headers: { 'Content-Type': undefined } });
       toast.success('Event created! Waiting for admin approval.');
       navigate('/client');
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to create event');
+      const data = err.response?.data;
+      if (data && typeof data === 'object') {
+        const msgs = Object.entries(data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`);
+        msgs.forEach((m) => toast.error(m));
+      } else {
+        toast.error(data?.detail || 'Failed to create event');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -261,8 +268,8 @@ export default function CreateEvent() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!form.title || !form.start_date || !form.location || !form.max_capacity) {
-                      toast.error('Please fill in required fields');
+                    if (!form.title || !form.description || !form.start_date || !form.location || !form.max_capacity) {
+                      toast.error('Please fill in all required fields');
                       return;
                     }
                     setStep(2);
