@@ -20,7 +20,10 @@ FRONTEND = ROOT / "frontend"
 VENV = BACKEND / ".venv"
 ACTIVATE = VENV / "Scripts" / "activate.bat"
 PYTHON = VENV / "Scripts" / "python.exe"
-PIP = VENV / "Scripts" / "pip.exe"
+
+# On Windows, npm is a .cmd script — resolve its full path so subprocess
+# can call it without shell=True.
+NPM = shutil.which("npm") or "npm"
 
 
 def banner(msg):
@@ -46,7 +49,7 @@ if not shutil.which("python"):
     die("Python not found. Install Python 3.10+ from https://python.org (tick 'Add to PATH')")
 
 if not shutil.which("npm"):
-    die("Node.js not found. Install Node.js 18+ from https://nodejs.org")
+    die("Node.js / npm not found. Install Node.js 18+ from https://nodejs.org and restart this window.")
 
 # ── 2. Virtual environment ─────────────────────────────────────────────────────
 banner("Setting up Python virtual environment...")
@@ -112,7 +115,7 @@ subprocess.run(
 banner("Checking frontend dependencies...")
 if not (FRONTEND / "node_modules").exists():
     banner("Installing npm packages (first run — may take a minute)...")
-    subprocess.run(["npm", "install", "--legacy-peer-deps", "--silent"], cwd=FRONTEND, check=True)
+    subprocess.run([NPM, "install", "--legacy-peer-deps", "--silent"], cwd=FRONTEND, check=True)
     ok("npm packages installed")
 else:
     ok("node_modules found, skipping install")
