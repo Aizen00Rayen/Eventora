@@ -549,16 +549,31 @@ function ModernTheme({ event, onRegister, registering, registered, user, payment
                   </div>
                 </div>
                 {event.ticket_type === 'paid' && (
-                  <div className="mb-4">
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                      Payment Receipt (Required) — Price: DZD {event.price}
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => setPaymentReceipt(e.target.files[0])}
-                      className="w-full border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-300 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-violet-600/20 file:text-violet-300 file:font-semibold"
-                    />
+                  <div className="mb-4 space-y-3">
+                    {/* CCP payment instructions */}
+                    <div className="bg-violet-950/60 border border-violet-700/40 rounded-xl p-4">
+                      <p className="text-xs font-bold text-violet-300 uppercase tracking-wider mb-1">Payment Instructions</p>
+                      <p className="text-sm text-gray-300 mb-2">
+                        Transfer <span className="font-bold text-white">DZD {event.price}</span> to the following CCP account, then upload your receipt below.
+                      </p>
+                      {event.ccp_number && (
+                        <div className="flex items-center gap-2 bg-gray-900 rounded-lg px-3 py-2 mt-2">
+                          <span className="text-xs text-gray-500 uppercase tracking-wide shrink-0">CCP</span>
+                          <span className="font-mono font-bold text-violet-300 text-sm select-all">{event.ccp_number}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                        Upload Payment Receipt *
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={(e) => setPaymentReceipt(e.target.files[0])}
+                        className="w-full border border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-300 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-violet-600/20 file:text-violet-300 file:font-semibold"
+                      />
+                    </div>
                   </div>
                 )}
                 <button
@@ -884,17 +899,26 @@ function AcademicTheme({ event, onRegister, registering, registered, user, payme
                     </div>
                   </div>
                   {event.ticket_type === 'paid' && (
-                    <div className="mb-4">
-                      <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: 'rgba(212,160,23,0.7)' }}>
-                        Payment Receipt (Required) — Price: DZD {event.price}
-                      </label>
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        onChange={(e) => setPaymentReceipt(e.target.files[0])}
-                        className="w-full border rounded-xl px-3 py-2 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:font-semibold"
-                        style={{ borderColor: 'rgba(212,160,23,0.3)', backgroundColor: 'rgba(212,160,23,0.04)', color: '#EDE9D5', '--file-bg': 'rgba(212,160,23,0.2)' }}
-                      />
+                    <div className="mb-4 space-y-3">
+                      {event.ccp_number && (
+                        <div className="rounded-xl p-3 text-sm" style={{ background: 'rgba(212,160,23,0.08)', border: '1px solid rgba(212,160,23,0.25)' }}>
+                          <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'rgba(212,160,23,0.7)' }}>Payment Instructions</p>
+                          <p style={{ color: '#EDE9D5' }} className="text-sm mb-1">Transfer <strong>DZD {event.price}</strong> to CCP:</p>
+                          <span className="font-mono font-bold select-all" style={{ color: 'rgba(212,160,23,1)' }}>{event.ccp_number}</span>
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: 'rgba(212,160,23,0.7)' }}>
+                          Upload Payment Receipt *
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) => setPaymentReceipt(e.target.files[0])}
+                          className="w-full border rounded-xl px-3 py-2 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:font-semibold"
+                          style={{ borderColor: 'rgba(212,160,23,0.3)', backgroundColor: 'rgba(212,160,23,0.04)', color: '#EDE9D5', '--file-bg': 'rgba(212,160,23,0.2)' }}
+                        />
+                      </div>
                     </div>
                   )}
                   <button
@@ -1070,6 +1094,14 @@ function DefaultTheme({ event, onRegister, registering, registered, user, paymen
               </p>
               {event.ticket_type === 'paid' && (
                 <div className="mb-4 text-left">
+                  {event.ccp_number && (
+                    <div className="mb-3 p-4 bg-violet-50 border border-violet-200 rounded-xl text-left">
+                      <p className="text-sm font-semibold text-violet-800 mb-1">Payment Instructions</p>
+                      <p className="text-sm text-violet-700 mb-2">Transfer <strong>DZD {event.price}</strong> to the following CCP account:</p>
+                      <span className="font-mono font-bold text-violet-900 select-all text-base">{event.ccp_number}</span>
+                      <p className="text-xs text-violet-500 mt-2">Then upload your payment receipt below.</p>
+                    </div>
+                  )}
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                     Payment Receipt (Required) — Price: DZD {event.price}
                   </label>
@@ -1356,6 +1388,14 @@ function CorporateTheme({ event, onRegister, registering, registered, user, paym
                 </div>
                 {event.ticket_type === 'paid' && (
                   <div className="mb-4">
+                    {event.ccp_number && (
+                      <div className="mb-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                        <p className="text-sm font-semibold text-blue-800 mb-1">Payment Instructions</p>
+                        <p className="text-sm text-blue-700 mb-2">Transfer <strong>DZD {event.price}</strong> to the following CCP account:</p>
+                        <span className="font-mono font-bold text-blue-900 select-all text-base">{event.ccp_number}</span>
+                        <p className="text-xs text-blue-500 mt-2">Then upload your payment receipt below.</p>
+                      </div>
+                    )}
                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                       Payment Receipt (Required) — Price: DZD {event.price}
                     </label>
@@ -1563,6 +1603,14 @@ function MinimalTheme({ event, onRegister, registering, registered, user, paymen
               </div>
               {event.ticket_type === 'paid' && (
                 <div className="mb-4">
+                  {event.ccp_number && (
+                    <div className="mb-3 p-4 bg-slate-800 border border-slate-600 rounded">
+                      <p className="text-xs font-semibold text-slate-300 uppercase tracking-widest mb-1">Payment Instructions</p>
+                      <p className="text-sm text-slate-400 mb-2">Transfer <strong className="text-white">DZD {event.price}</strong> to the following CCP account:</p>
+                      <span className="font-mono font-bold text-violet-300 select-all text-base">{event.ccp_number}</span>
+                      <p className="text-xs text-slate-500 mt-2">Then upload your payment receipt below.</p>
+                    </div>
+                  )}
                   <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
                     Payment Receipt (Required) — Price: DZD {event.price}
                   </label>
@@ -1822,6 +1870,14 @@ function VibrantTheme({ event, onRegister, registering, registered, user, paymen
               </div>
               {event.ticket_type === 'paid' && (
                 <div className="mb-4">
+                  {event.ccp_number && (
+                    <div className="mb-3 p-4 rounded-2xl" style={{ background: 'linear-gradient(135deg, #EDE9FE, #E0E7FF)' }}>
+                      <p className="text-sm font-semibold text-violet-800 mb-1">Payment Instructions</p>
+                      <p className="text-sm text-violet-700 mb-2">Transfer <strong>DZD {event.price}</strong> to the following CCP account:</p>
+                      <span className="font-mono font-bold text-violet-900 select-all text-base">{event.ccp_number}</span>
+                      <p className="text-xs text-violet-500 mt-2">Then upload your payment receipt below.</p>
+                    </div>
+                  )}
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
                     Payment Receipt (Required) — Price: DZD {event.price}
                   </label>

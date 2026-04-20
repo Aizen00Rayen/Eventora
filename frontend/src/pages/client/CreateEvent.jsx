@@ -60,6 +60,7 @@ export default function CreateEvent() {
     max_capacity: '',
     ticket_type: 'free',
     price: '',
+    ccp_number: '',
     theme: 'modern',
   });
 
@@ -92,6 +93,7 @@ export default function CreateEvent() {
       formData.append('ticket_type', form.ticket_type);
       if (form.ticket_type === 'paid') {
         formData.append('price', form.price || '0');
+        formData.append('ccp_number', form.ccp_number || '');
       }
       if (logoFile) formData.append('logo', logoFile);
 
@@ -304,18 +306,32 @@ export default function CreateEvent() {
                 </div>
 
                 {form.ticket_type === 'paid' && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Ticket Price (DZD)</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-xs">DZD</span>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Ticket Price (DZD)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-xs">DZD</span>
+                        <input
+                          name="price"
+                          type="number"
+                          step="0.01"
+                          value={form.price}
+                          onChange={handleChange}
+                          placeholder="0.00"
+                          className="input pl-12"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">CCP Account Number</label>
+                      <p className="text-xs text-gray-400 mb-2">Participants will use this number to send their payment before uploading the receipt.</p>
                       <input
-                        name="price"
-                        type="number"
-                        step="0.01"
-                        value={form.price}
+                        name="ccp_number"
+                        type="text"
+                        value={form.ccp_number}
                         onChange={handleChange}
-                        placeholder="0.00"
-                        className="input pl-12"
+                        placeholder="e.g. 0012345 — clé 67"
+                        className="input"
                       />
                     </div>
                   </div>
