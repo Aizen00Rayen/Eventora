@@ -346,12 +346,11 @@ export default function CreateEvent() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-3">Choose Theme</label>
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {[
                       { value: 'modern', color: 'from-violet-600 to-purple-900', label: 'Modern' },
                       { value: 'academic', color: 'from-blue-800 to-yellow-600', label: 'Academic' },
                       { value: 'corporate', color: 'from-blue-600 to-blue-900', label: 'Corporate' },
-                      { value: 'minimal', color: 'from-gray-300 to-gray-500', label: 'Minimal' },
                       { value: 'vibrant', color: 'from-pink-500 via-purple-500 to-indigo-600', label: 'Vibrant' },
                     ].map((t) => (
                       <button

@@ -122,3 +122,12 @@ class AdminApproveUserView(APIView):
         user.is_active = True
         user.save(update_fields=['is_active'])
         return Response(UserSerializer(user).data)
+
+
+class AvailableOrganizersView(generics.ListAPIView):
+    """Client: list active users with role=organizer to pick from when assigning."""
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return User.objects.filter(role='organizer', is_active=True).order_by('first_name', 'last_name')

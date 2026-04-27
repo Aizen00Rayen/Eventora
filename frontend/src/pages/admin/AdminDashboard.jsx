@@ -201,15 +201,12 @@ function AdminSidebar({ variant = 'admin' }) {
         { to: '/admin', end: true, icon: <Ico.Grid />, label: 'Dashboard' },
         { to: '/admin/events', icon: <Ico.Calendar />, label: 'Events' },
         { to: '/admin/users', icon: <Ico.Users />, label: 'Users' },
-        { to: '/admin/reports', icon: <Ico.Reports />, label: 'Reports' },
-        { to: '/admin/revenue', icon: <Ico.Star />, label: 'Revenue' },
       ]
     : [
         { to: '/admin', end: true, icon: <Ico.Grid />, label: 'Overview' },
         { to: '/admin/events', icon: <Ico.Calendar />, label: 'Events' },
         { to: '/admin/registrations', icon: <Ico.Reports />, label: 'Registrations' },
         { to: '/admin/users', icon: <Ico.Users />, label: 'Users' },
-        { to: '/admin/settings', icon: <Ico.Settings />, label: 'Settings' },
       ];
 
   return (
@@ -248,12 +245,7 @@ function AdminSidebar({ variant = 'admin' }) {
       </nav>
       {variant === 'users' ? (
         <div className="p-4 border-t border-gray-100">
-          <NavLink to="/admin/settings" className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-50'}`
-          }>
-            <Ico.Settings />Settings
-          </NavLink>
-          <div className="flex items-center justify-between mt-3 px-3">
+          <div className="flex items-center justify-between px-3">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
                 {getInitials(user)}
@@ -1242,32 +1234,6 @@ function AdminRegistrationsPage() {
   );
 }
 
-// ── Admin Reports Page ────────────────────────────────────────────────────────
-function AdminReportsPage() {
-  return (
-    <div className="flex-1 p-8 overflow-y-auto">
-      <h1 className="text-3xl font-extrabold text-gray-900 mb-6">Reports</h1>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
-        <p className="text-lg font-semibold mb-2">Reports coming soon</p>
-        <p className="text-sm">Export and analytics reports will be available here.</p>
-      </div>
-    </div>
-  );
-}
-
-// ── Admin Revenue Page ────────────────────────────────────────────────────────
-function AdminRevenuePage() {
-  return (
-    <div className="flex-1 p-8 overflow-y-auto">
-      <h1 className="text-3xl font-extrabold text-gray-900 mb-6">Revenue</h1>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
-        <p className="text-lg font-semibold mb-2">Revenue tracking coming soon</p>
-        <p className="text-sm">Revenue analytics and financial reports will be available here.</p>
-      </div>
-    </div>
-  );
-}
-
 // ── Layout ────────────────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   return (
@@ -1283,9 +1249,6 @@ export default function AdminDashboard() {
               <Route index element={<AdminHome />} />
               <Route path="events" element={<AdminEventsPage />} />
               <Route path="registrations" element={<AdminRegistrationsPage />} />
-              <Route path="reports" element={<AdminReportsPage />} />
-              <Route path="revenue" element={<AdminRevenuePage />} />
-              <Route path="settings" element={<AdminHome />} />
             </Routes>
           </>
         } />

@@ -246,13 +246,13 @@ export default function OrganizerDashboard() {
     };
     setHistory(prev => [entry, ...prev]);
     setValidatedCount(c => c + 1);
-    addToast('success', 'Check-in Success', `${data.participant} • VIP Pass`);
-    setScanOpen(false);
+    addToast('success', 'Check-in Success', data.participant);
+    // Keep modal open so organizer can see the result, then click "Scan Next"
   };
 
   const handleError = (msg) => {
-    addToast('error', 'Invalid Ticket', 'Code already used or expired');
-    setScanOpen(false);
+    addToast('error', 'Invalid Ticket', msg);
+    // Keep modal open so organizer can see the error, then click "Scan Next"
   };
 
   const totalCapacity = orgInfo?.event?.max_capacity || 150;

@@ -24,7 +24,25 @@ class OrganizerListCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         event = get_object_or_404(Event, pk=self.kwargs['event_id'])
         data = request.data
-        # Auto-create organizer user account
+        user_id = data.get('user_id')
+
+        if user_id:
+            # Assign an existing organizer user to this event
+            user = get_object_or_404(User, pk=user_id, role='organizer', is_active=True)
+            if Organizer.objects.filter(event=event, user=user).exists():
+                return Response(
+                    {'detail': 'This organizer is already assigned to this event.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            organizer = Organizer.objects.create(
+                event=event,
+                user=user,
+                door_number=data.get('door_number', ''),
+                work_schedule=data.get('work_schedule', ''),
+            )
+            return Response(OrganizerSerializer(organizer).data, status=status.HTTP_201_CREATED)
+
+        # No user_id: create a brand-new organizer account and send credentials
         password = secrets.token_urlsafe(10)
         username = data.get('email', '').split('@')[0] + secrets.token_hex(3)
         user = User.objects.create_user(

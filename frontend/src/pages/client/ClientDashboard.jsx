@@ -568,14 +568,19 @@ function SponsorsPage() {
 function OrganizersPage() {
   const [events, setEvents] = useState([]);
   const [organizers, setOrganizers] = useState([]);
+  const [availableOrganizers, setAvailableOrganizers] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const { register, handleSubmit, reset } = useForm();
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [doorNumber, setDoorNumber] = useState('');
+  const [workSchedule, setWorkSchedule] = useState('');
 
   useEffect(() => {
+    api.get('/api/auth/organizers/').then(({ data }) => setAvailableOrganizers(data.results || data));
     api.get('/api/events/').then(({ data }) => {
-      const evs = data.results || data; setEvents(evs);
+      const evs = data.results || data;
+      setEvents(evs);
       if (evs.length > 0) setSelectedEvent(evs[0].id);
     });
   }, []);
@@ -585,20 +590,35 @@ function OrganizersPage() {
     api.get(`/api/events/${selectedEvent}/organizers/`).then(({ data }) => setOrganizers(data.results || data));
   }, [selectedEvent]);
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedUserId) { toast.error('Please select an organizer'); return; }
+    if (!doorNumber) { toast.error('Door number is required'); return; }
     setSaving(true);
     try {
-      const res = await api.post(`/api/events/${selectedEvent}/organizers/`, data);
-      setOrganizers((prev) => [...prev, res.data]); reset(); setModalOpen(false);
-      toast.success('Organizer added! Credentials sent by email.');
-    } catch { toast.error('Failed'); } finally { setSaving(false); }
+      const res = await api.post(`/api/events/${selectedEvent}/organizers/`, {
+        user_id: selectedUserId,
+        door_number: doorNumber,
+        work_schedule: workSchedule,
+      });
+      setOrganizers((prev) => [...prev, res.data]);
+      setSelectedUserId(''); setDoorNumber(''); setWorkSchedule('');
+      setModalOpen(false);
+      toast.success('Organizer assigned to event!');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to assign organizer');
+    } finally { setSaving(false); }
   };
+
+  // Organizers already assigned to the selected event (to exclude from dropdown)
+  const assignedUserIds = new Set(organizers.map((o) => o.user?.id));
+  const unassigned = availableOrganizers.filter((u) => !assignedUserIds.has(u.id));
 
   return (
     <div className="flex-1 p-8 overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Organizers</h1>
-        <button onClick={() => setModalOpen(true)} className="btn-primary" disabled={!selectedEvent}>+ Add Organizer</button>
+        <button onClick={() => setModalOpen(true)} className="btn-primary" disabled={!selectedEvent}>+ Assign Organizer</button>
       </div>
       <select className="input max-w-xs mb-6" value={selectedEvent} onChange={(e) => setSelectedEvent(e.target.value)}>
         {events.map((ev) => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
@@ -616,18 +636,41 @@ function OrganizersPage() {
           ))}
         </div>
       )}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Organizer">
-        <p className="text-sm text-gray-500 mb-4">A new account will be created and credentials emailed.</p>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-sm font-medium mb-1.5">First name</label><input {...register('first_name', { required: true })} className="input" /></div>
-            <div><label className="block text-sm font-medium mb-1.5">Last name</label><input {...register('last_name', { required: true })} className="input" /></div>
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Assign Organizer">
+        {unassigned.length === 0 ? (
+          <div className="text-center py-6">
+            <p className="text-gray-500 text-sm">No available organizers to assign.</p>
+            <p className="text-gray-400 text-xs mt-1">Ask an organizer to register an account first, then the admin must approve it.</p>
           </div>
-          <div><label className="block text-sm font-medium mb-1.5">Email</label><input {...register('email', { required: true })} type="email" className="input" /></div>
-          <div><label className="block text-sm font-medium mb-1.5">Door number</label><input {...register('door_number', { required: true })} className="input" placeholder="A1" /></div>
-          <div><label className="block text-sm font-medium mb-1.5">Work schedule</label><input {...register('work_schedule')} className="input" placeholder="09:00-18:00" /></div>
-          <button type="submit" disabled={saving} className="btn-primary w-full">{saving ? 'Adding...' : 'Add Organizer'}</button>
-        </form>
+        ) : (
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Select Organizer</label>
+              <select
+                className="input"
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                required
+              >
+                <option value="">— choose an organizer —</option>
+                {unassigned.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.first_name} {u.last_name} ({u.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Door / Station number</label>
+              <input value={doorNumber} onChange={(e) => setDoorNumber(e.target.value)} className="input" placeholder="e.g. A1" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Work schedule</label>
+              <input value={workSchedule} onChange={(e) => setWorkSchedule(e.target.value)} className="input" placeholder="09:00-18:00" />
+            </div>
+            <button type="submit" disabled={saving} className="btn-primary w-full">{saving ? 'Assigning...' : 'Assign Organizer'}</button>
+          </form>
+        )}
       </Modal>
     </div>
   );
